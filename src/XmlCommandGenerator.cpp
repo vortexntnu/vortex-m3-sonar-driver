@@ -1,4 +1,4 @@
-#include "XmlCommandGenerator.hpp"
+#include <XmlCommandGenerator.hpp>
 
 std::string XmlCommandGenerator::Connect() {
     return "<Command>\n<Operation>Connect</Operation>\n</Command>\n";

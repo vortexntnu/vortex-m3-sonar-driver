@@ -1,16 +1,24 @@
-#include "XmlResponseParser.hpp"
-#include "rapidxml.hpp"
+#include <XmlResponseParser.hpp>
+#include <rapidxml/rapidxml.hpp>
+#include <iostream>
 
-int parseResponse(const std::string& response_input, ResponseInfo& parsed_response) {
+/**
+ * @brief Parse the response from the sonar device
+ * 
+ * @param response xml string response from the M3 sonar
+ * @return ResponseInfo parsed response
+ * @throw std::runtime_error if the response is invalid
+ * @throw std::runtime_error if the response is incomplete
+ * @throw std::runtime_error if the response is not a valid XML
+ */
+ResponseInfo parseResponse(const std::string& response) {
     rapidxml::xml_document<> doc;
-    doc.parse<0>(const_cast<char*>(response_input.c_str()));
+    doc.parse<0>(const_cast<char*>(response.c_str()));
 
     rapidxml::xml_node<>* root = doc.first_node("Response");
 
-
     if (!root) {
-        std::cerr << "Invalid response format" << std::endl;
-        return ResponseStatus::INVALID_RESPONSE;
+        throw std::runtime_error("Invalid response");
     }
 
     rapidxml::xml_node<>* operationNode = root->first_node("Operation");
@@ -20,10 +28,10 @@ int parseResponse(const std::string& response_input, ResponseInfo& parsed_respon
     rapidxml::xml_node<>* timeNode = root->first_node("Time");
 
     if (!operationNode || !statusNode || !messageNode || !timeNode) {
-        std::cerr << "Incomplete response" << std::endl;
-        return ResponseStatus::INCOMPLETE_RESPONSE;
+        throw std::runtime_error("Incomplete response");
     }
 
+    ResponseInfo info;
     info.operation = operationNode->value();
     info.status = statusNode->value();
     info.message = messageNode->value();
@@ -31,4 +39,14 @@ int parseResponse(const std::string& response_input, ResponseInfo& parsed_respon
     info.time = timeNode->value();
 
     return info;
+}
+
+
+std::ostream &operator<<(std::ostream &os, ResponseInfo const &m) { 
+    return os 
+        << "operation: " << m.operation << '\n'
+        << "status: "    << m.status    << '\n'
+        << "message: "   << m.message   << '\n'
+        << "version: "   << m.version   << '\n'
+        << "time: "      << m.time      << std::endl;
 }
