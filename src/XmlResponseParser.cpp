@@ -9,7 +9,7 @@
  * @return ResponseInfo parsed response
  * @throw std::runtime_error if the response is invalid
  * @throw std::runtime_error if the response is incomplete
- * @throw std::runtime_error if the response is not a valid XML
+ * @throw rapidxml::parse_error if the response is not a valid XML
  */
 ResponseInfo parseResponse(const std::string& response) {
     rapidxml::xml_document<> doc;
