@@ -1,6 +1,5 @@
 #include <iostream>
-#include <XmlCommandGenerator.hpp>
-#include <XmlResponseParser.hpp>
+#include <xml/xml.hpp>
 
 int main() {
     std::string response = R"(
@@ -12,7 +11,7 @@ int main() {
 <Time>2023-09-28 18:03:21</Time>
 </Response>)";
 
-    ResponseInfo result = parseResponse(response);
+    xml::ResponseInfo result = xml::parseResponse(response);
     std::cout << result << std::endl;
 
     return 0;
