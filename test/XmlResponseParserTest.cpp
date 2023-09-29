@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <rapidxml/rapidxml.hpp>
-#include <XmlResponseParser.hpp>
+#include <xml/m3ResponseParser.hpp>
 
 TEST(XmlResponseParser, ParseGetStatusResponseWithValidXml) {
     std::string response = R"(
@@ -12,7 +12,7 @@ TEST(XmlResponseParser, ParseGetStatusResponseWithValidXml) {
 <Time>2016-09-13 15:22:21</Time>
 </Response>)";
 
-    ResponseInfo result = parseResponse(response);
+    xml::ResponseInfo result = xml::parseResponse(response);
 
     EXPECT_EQ(result.operation, "Get_Status");
     EXPECT_EQ(result.status, "OK");
@@ -26,7 +26,7 @@ TEST(XmlResponseParser, ParseGetStatusResponseWithInvalidXml) {
 
     try
     {
-        ResponseInfo result = parseResponse(response);
+        xml::ResponseInfo result = xml::parseResponse(response);
         FAIL() << "Expected rapidxml::parse_error";
     }
     catch(const rapidxml::parse_error& e)
@@ -48,7 +48,7 @@ TEST(XmlResponseParser, ParseGetStatusResponseWithInvalidResponse) {
 
     try
     {
-        ResponseInfo result = parseResponse(response);
+        xml::ResponseInfo result = xml::parseResponse(response);
         FAIL() << "Expected std::runtime_error";
     }
     catch(const std::runtime_error& e)
@@ -67,7 +67,7 @@ TEST(XmlResponseParser, ParseGetStatusResponseWithIncompleteResponse) {
 
     try
     {
-        ResponseInfo result = parseResponse(response);
+        xml::ResponseInfo result = xml::parseResponse(response);
         FAIL() << "Expected std::runtime_error";
     }
     catch(const std::runtime_error& e)

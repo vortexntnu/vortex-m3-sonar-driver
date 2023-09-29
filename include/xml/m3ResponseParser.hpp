@@ -3,14 +3,14 @@
 #include <string>
 #include <iostream>
 
+namespace xml {
+
 /**
  * @brief Struct to hold the response from the sonar device
- * 
  */
 struct ResponseInfo {
     /**
      * @brief Initialize the struct with empty strings
-     * 
      */
     ResponseInfo() : operation(""), status(""), message(""), version(""), time("") {}
 
@@ -20,6 +20,7 @@ struct ResponseInfo {
     std::string version;
     std::string time;
 };
+
 std::ostream &operator<<(std::ostream &os, ResponseInfo const &m);
 
 /**
@@ -31,3 +32,4 @@ std::ostream &operator<<(std::ostream &os, ResponseInfo const &m);
  */
 ResponseInfo parseResponse(const std::string& response);
 
+} // namespace xml

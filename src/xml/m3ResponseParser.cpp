@@ -1,6 +1,8 @@
-#include <XmlResponseParser.hpp>
+#include <xml/m3ResponseParser.hpp>
 #include <rapidxml/rapidxml.hpp>
 #include <iostream>
+
+namespace xml {
 
 /**
  * @brief Parse the response from the sonar device
@@ -50,3 +52,5 @@ std::ostream &operator<<(std::ostream &os, ResponseInfo const &m) {
         << "version: "   << m.version   << '\n'
         << "time: "      << m.time      << std::endl;
 }
+
+} // namespace xml

@@ -19,8 +19,8 @@ include_directories(include)
 # Create executable
 add_executable(${PROJECT_NAME}_main
     src/main.cpp
-    src/XmlCommandGenerator.cpp
-    src/XmlResponseParser.cpp
+    src/xml/m3CommandGenerator.cpp
+    src/xml/m3ResponseParser.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}_main
 )
@@ -44,8 +44,8 @@ if(BUILD_TESTING)
     test/XmlCommandGeneratorTest.cpp
     test/XmlResponseParserTest.cpp
 
-    src/XmlCommandGenerator.cpp
-    src/XmlResponseParser.cpp
+    src/xml/m3CommandGenerator.cpp
+    src/xml/m3ResponseParser.cpp
   )
   target_include_directories(${PROJECT_NAME}_test PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
