@@ -41,4 +41,4 @@ jobs:
           image: localtest:latest
           run: |
             cd /ros2_ws
-            bash src/vortex-m3-sonar-driver/run_and_check_tests.sh
+            bash ./src/vortex-m3-sonar-driver/run_and_check_tests.sh
