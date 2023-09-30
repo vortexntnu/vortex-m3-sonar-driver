@@ -5,4 +5,5 @@ COPY . /ros2_ws/src/vortex-m3-sonar-driver
 
 # Install rosdeps
 WORKDIR /ros2_ws
+RUN ls
 RUN sudo rosdep init && rosdep update && rosdep install --from-paths src -y --ignore-src
