@@ -1,0 +1,29 @@
+name: CI Action
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches: [ main ]
+
+  pull_request:
+    branches: [ main ]
+
+env:
+  ROS_DISTRO: humble
+
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install ROS
+        uses: ros-tooling/setup-ros@v0.6
+        with:
+          required-ros-distro: ${{ env.ROS_DISTRO }}
+      - name: Build and run tests
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          package_name: vortex-m3-sonar-driver
+          target-ros2-distros: ${{ env.ROS_DISTRO }}
