@@ -19,18 +19,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install ROS
+      - name: Install ROS2 and dependencies
         uses: ros-tooling/setup-ros@v0.6
         with:
           required-ros-distro: ${{ env.ROS_DISTRO }}
-      - name: Build and run tests
+          
+      - name: Build and Run Tests
         uses: ros-tooling/action-ros-ci@v0.3
+        id: action_ros_ci_step
         with:
           package-name: vortex-m3-sonar-driver
           target-ros2-distro: ${{ env.ROS_DISTRO }}
           colcon-defaults: |
             {
               "build": {
-                "mixin": ["coverage-gcc"]
+                "mixin": ["coverage-gcc", "coverage-pytest"]
               }
+            },
+              "test": {
+                "mixin": ["coverage-pytest"]
             }
+            
+      - name: Upload Code Coverage Info
+        uses: codecov/codecov-action@v1.2.1
+        with:
+          # token: ${{ secrets.CODECOV_TOKEN }}  # only needed for private repos
+          files: ros_ws/lcov/total_coverage.info,ros_ws/coveragepy/.coverage
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Upload Test Results as Artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: colcon-logs
+          path: ${{ steps.action_ros_ci_step.outputs.ros-workspace-directory-name }}/log
+        if: always() # upload the logs even when the build fails
