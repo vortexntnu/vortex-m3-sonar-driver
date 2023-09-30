@@ -26,4 +26,4 @@ jobs:
         uses: ros-tooling/action-ros-ci@v0.3
         with:
           package_name: vortex-m3-sonar-driver
-          target-ros2-distros: ${{ env.ROS_DISTRO }}
+          target-ros2-distro: ${{ env.ROS_DISTRO }}
