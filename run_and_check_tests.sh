@@ -17,8 +17,8 @@ colcon test
 
 # Check the results
 echo "Checking the results"
-cat "${file}"
 colcon test-result > "${file}"
+cat "${file}"
 
 declare file_content=$( cat "${file}" )
 if [[ " $file_content " =~ $regex ]]; then
