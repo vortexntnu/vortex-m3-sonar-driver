@@ -1,9 +1,10 @@
 name: Format C++ code with clang-format
 
 on:
+  workflow_dispatch:
+  
   push:
     branches: [ main ]
-  workflow_dispatch:
 
   pull_request:
     types: [opened, reopened]

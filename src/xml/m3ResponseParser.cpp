@@ -50,7 +50,7 @@ std::ostream &operator<<(std::ostream &os, ResponseInfo const &m)
 	          << "status: " << m.status << '\n'
 	          << "message: " << m.message << '\n'
 	          << "version: " << m.version << '\n'
-	          << "time: " << m.time << std::endl;
+	          << "time: " << m.time << '\n';
 }
 
 } // namespace xml
