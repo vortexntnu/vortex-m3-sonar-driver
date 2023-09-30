@@ -39,4 +39,6 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: localtest:latest
-          run: colcon test
+          run: |
+            cd /ros2_ws
+            bash src/vortex-m3-sonar-driver/run_and_check_tests.sh
