@@ -41,8 +41,7 @@ jobs:
           image: localtest:latest
           run: |
             cd /ros2_ws
-            ls -la
+            ls src
             bash ./src/vortex-m3-sonar-driver/run_and_check_tests.sh
-
 # Look at https://github.com/marketplace/actions/ros-2-ci-action for a less scuffed way to do this. 
 # This can also be integrated with https://about.codecov.io/ which is nice.
