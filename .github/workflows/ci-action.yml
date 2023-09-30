@@ -1,5 +1,5 @@
 # From https://github.com/marketplace/actions/ros-2-ci-action
-name: Unit Tests
+name: CI Action
 
 on:
   workflow_dispatch:
