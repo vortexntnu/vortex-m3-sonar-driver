@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script runs the unit tests and checks the results.
+
 declare file="test_results"
 declare regex=" tests, 0 errors, 0 failures, 0 skipped"
 
@@ -20,11 +21,12 @@ echo "Checking the results"
 colcon test-result > "${file}"
 cat "${file}"
 
+# Verify the results
 declare file_content=$( cat "${file}" )
 if [[ " $file_content " =~ $regex ]]; then
-    echo "Unit tests passed"
+    echo "All unit tests passed"
     exit 0
 else
-    echo "Unit tests failed"
+    echo "Some unit tests failed"
     exit 1
 fi

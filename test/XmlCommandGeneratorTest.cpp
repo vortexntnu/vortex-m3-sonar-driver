@@ -33,3 +33,5 @@ TEST(XmlCommandGenerator, StopRecord) { EXPECT_EQ(xml::command::stopRecord(), st
 TEST(XmlCommandGenerator, StartExport) { EXPECT_EQ(xml::command::startExport(), std::string("<Command>\n<Operation>Start_Export</Operation>\n</Command>\n")); }
 
 TEST(XmlCommandGenerator, StopExport) { EXPECT_EQ(xml::command::stopExport(), std::string("<Command>\n<Operation>Stop_Export</Operation>\n</Command>\n")); }
+
+TEST(XmlCommandGenerator, Fail) { FAIL(); }
