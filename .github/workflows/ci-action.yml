@@ -1,4 +1,5 @@
-name: CI Action
+# From https://github.com/marketplace/actions/ros-2-ci-action
+name: Unit Tests
 
 on:
   workflow_dispatch:
@@ -27,3 +28,9 @@ jobs:
         with:
           package-name: vortex-m3-sonar-driver
           target-ros2-distro: ${{ env.ROS_DISTRO }}
+          colcon-defaults: |
+            {
+              "build": {
+                "mixin": ["coverage-gcc"]
+              }
+            }
