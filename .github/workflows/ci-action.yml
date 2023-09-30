@@ -25,5 +25,5 @@ jobs:
       - name: Build and run tests
         uses: ros-tooling/action-ros-ci@v0.3
         with:
-          package_name: vortex-m3-sonar-driver
+          package-name: vortex-m3-sonar-driver
           target-ros2-distro: ${{ env.ROS_DISTRO }}
