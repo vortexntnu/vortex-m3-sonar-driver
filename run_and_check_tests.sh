@@ -8,16 +8,16 @@ declare regex=" tests, 0 errors, 0 failures, 0 skipped"
 . /opt/ros/humble/setup.bash
 
 # Build the package
-cat "Building the package"
+echo "Building the package"
 colcon build
 
 # Run the unit tests
-cat "Running the unit tests"
+echo "Running the unit tests"
 colcon test
 
 # Check the results
-cat "Checking the results"
-cat $file
+echo "Checking the results"
+cat "${file}"
 colcon test-result > "${file}"
 
 declare file_content=$( cat "${file}" )
