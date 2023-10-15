@@ -4,15 +4,7 @@
 
 namespace xml {
 
-/**
- * @brief Parse the response from the sonar device
- *
- * @param response xml string response from the M3 sonar
- * @return ResponseInfo parsed response
- * @throw std::runtime_error if the response is invalid
- * @throw std::runtime_error if the response is incomplete
- * @throw rapidxml::parse_error if the response is not a valid XML
- */
+
 ResponseInfo parseResponse(const std::string &response)
 {
 	rapidxml::xml_document<> doc;
