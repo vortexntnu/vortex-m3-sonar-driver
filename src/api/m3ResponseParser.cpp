@@ -1,9 +1,9 @@
 #include <iostream>
 #include <rapidxml/rapidxml.hpp>
-#include <xml/m3ResponseParser.hpp>
+#include <api/m3ResponseParser.hpp>
 
-namespace xml {
-
+namespace m3 {
+namespace api{
 
 ResponseInfo parseResponse(const std::string &response)
 {
@@ -45,4 +45,5 @@ std::ostream &operator<<(std::ostream &os, ResponseInfo const &m)
 	          << "time: " << m.time << '\n';
 }
 
-} // namespace xml
+} // namespace api
+} // namespace m3

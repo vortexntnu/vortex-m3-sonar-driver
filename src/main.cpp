@@ -1,5 +1,5 @@
 #include <iostream>
-#include <xml/xml.hpp>
+#include <api/api.hpp>
 
 int main()
 {
@@ -12,7 +12,7 @@ int main()
 <Time>2023-09-28 18:03:21</Time>
 </Response>)";
 
-	xml::ResponseInfo result = xml::parseResponse(response);
+	m3::api::ResponseInfo result = m3::api::parseResponse(response);
 	std::cout << result << std::endl;
 
 	return 0;

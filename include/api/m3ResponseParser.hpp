@@ -3,7 +3,8 @@
 #include <iostream>
 #include <string>
 
-namespace xml {
+namespace m3 {
+namespace api {
 
 /**
  * @brief Struct to hold the response from the sonar device
@@ -34,4 +35,5 @@ std::ostream &operator<<(std::ostream &os, ResponseInfo const &m);
  */
 ResponseInfo parseResponse(const std::string &response);
 
-} // namespace xml
+} // namespace api
+} // namespace m3

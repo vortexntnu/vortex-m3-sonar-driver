@@ -1,6 +1,7 @@
-#include <xml/m3CommandGenerator.hpp>
+#include <api/m3CommandGenerator.hpp>
 
-namespace xml {
+namespace m3 {
+namespace api {
 namespace command {
 
 std::string connect() { return "<Command>\n<Operation>Connect</Operation>\n</Command>\n"; }
@@ -38,4 +39,5 @@ std::string startExport() { return "<Command>\n<Operation>Start_Export</Operatio
 std::string stopExport() { return "<Command>\n<Operation>Stop_Export</Operation>\n</Command>\n"; }
 
 } // namespace command
-} // namespace xml
+} // namespace api
+} // namespace m3
