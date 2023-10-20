@@ -2,7 +2,8 @@
 
 #include <string>
 
-namespace xml {
+namespace m3 {
+namespace api {
 namespace command {
 
 /**
@@ -102,4 +103,5 @@ std::string startExport();
 std::string stopExport();
 
 } // namespace command
-} // namespace xml
+} // namespace api
+} // namespace m3

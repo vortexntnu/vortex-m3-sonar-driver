@@ -1,18 +1,10 @@
 #include <iostream>
 #include <rapidxml/rapidxml.hpp>
-#include <xml/m3ResponseParser.hpp>
+#include <api/m3ResponseParser.hpp>
 
-namespace xml {
+namespace m3 {
+namespace api{
 
-/**
- * @brief Parse the response from the sonar device
- *
- * @param response xml string response from the M3 sonar
- * @return ResponseInfo parsed response
- * @throw std::runtime_error if the response is invalid
- * @throw std::runtime_error if the response is incomplete
- * @throw rapidxml::parse_error if the response is not a valid XML
- */
 ResponseInfo parseResponse(const std::string &response)
 {
 	rapidxml::xml_document<> doc;
@@ -53,4 +45,5 @@ std::ostream &operator<<(std::ostream &os, ResponseInfo const &m)
 	          << "time: " << m.time << '\n';
 }
 
-} // namespace xml
+} // namespace api
+} // namespace m3
