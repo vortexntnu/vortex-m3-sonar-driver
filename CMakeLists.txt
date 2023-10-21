@@ -12,6 +12,7 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 # Specify the include directories
 include_directories(include)
@@ -21,10 +22,14 @@ add_executable(${PROJECT_NAME}_main
     src/main.cpp
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
+    src/netUtils.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}_main
+    Eigen3
 )
-
+target_link_libraries(${PROJECT_NAME}_main 
+  PUBLIC Eigen3::Eigen
+)
 # Install the headers
 install(
     DIRECTORY include
@@ -43,15 +48,20 @@ if(BUILD_TESTING)
     test/main.cpp
     test/XmlCommandGeneratorTest.cpp
     test/XmlResponseParserTest.cpp
+    test/ImbFormatTest.cpp
+    test/netUtilsTest.cpp
 
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
+    src/imb/imbFormat.cpp
+    src/netUtils.cpp
   )
   target_include_directories(${PROJECT_NAME}_test PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
   )
   ament_target_dependencies(${PROJECT_NAME}_test
+    Eigen3
   )
 
 endif()

@@ -1,49 +1,12 @@
 #include <imb/ImbFormat.hpp>
+#include "../netUtils.hpp"
 
 namespace m3 {
 namespace imb {
 
-#include <stdint.h>
 
-/**
- * @brief Function to check if the host system is little-endian
- * @return true if the system is little-endian
- */
-bool is_little_endian() 
-{
-    uint16_t number = 0x1;
-    char *numPtr = (char*)&number;
-    return (numPtr[0] == 1);
-}
-/**
- * @brief Function to convert double from network byte order to host byte order
- * 
- * @param byteArray in network byte order (big-endian)
- * @return double 
- */
-uint64_t ntohd(uint64_t byteArray) 
-{
-    union {
-        double d;
-        uint8_t bytes[sizeof(uint64_t)];
-    } dst;
+static constexpr uint16_t SYNC_WORD = 0x8000;
 
-    uint64_t *byteArrayPtr = &byteArray;
-
-    if (is_little_endian()) {
-        // If the system is little-endian, reverse the byte array
-        for (size_t i = 0; i < sizeof(uint64_t); i++) {
-            dst.bytes[i] = byteArrayPtr[sizeof(uint64_t) - 1 - i];
-        }
-    } else {
-        // If the system is big-endian, copy the byte array as is
-        for (size_t i = 0; i < sizeof(uint64_t); i++) {
-            dst.bytes[i] = byteArrayPtr[i];
-        }
-    }
-
-    return dst.d;
-}
 
 
 
@@ -53,11 +16,13 @@ PacketHeader::PacketHeader(const uint8_t* byteArray)
     // byte alignment
     for (size_t i = 0; i < 4; i++)
     {
-        synchronizationWord[i] = ntohl(synchronizationWord[i]);
+        // synchronizationWord[i] = ntohs(synchronizationWord[i]);
+        if (synchronizationWord[i] != SYNC_WORD) { throw std::invalid_argument("Invalid synchronization word"); }
     }
-    dataType = (DataType)ntohs((uint16_t)dataType);
+    // dataType = (DataType)ntohs((uint16_t)dataType);
+    if (dataType != DataType::FloatComplex && dataType != DataType::IntegerMagnitude) { throw std::invalid_argument("Invalid data type"); }
     // don't need to convert reservedField and reservedBytes
-    packetBodySize = ntohl(packetBodySize);
+    // packetBodySize = ntohl(packetBodySize);
 }
 
 DataHeader::DataHeader(const uint8_t* byteArray)
@@ -142,14 +107,6 @@ DataHeader::DataHeader(const uint8_t* byteArray)
     fConductivity = ntohl(fConductivity);
 }
 
-PacketFooter::PacketFooter(const uint8_t* byteArray)
-{
-    std::memcpy(this, byteArray, sizeof(PacketFooter));
-    // byte alignment
-    packetBodySize = ntohl(packetBodySize);
-    // don't need to convert reservedBytes
-}
-
 DataBody::DataBody(const uint8_t* byteArray, uint16_t nNumBeams, uint16_t nNumSamples, DataType dataType) 
     : dataType(dataType) 
 {
@@ -208,7 +165,6 @@ ImbPacketStructure::ImbPacketStructure(const uint8_t* byteArray)
 
 void ImbPacketStructure::validate() const
 {
-    static constexpr uint16_t SYNC_WORD = 0x8000;
     for (size_t i = 0; i < 4; ++i) {
         if (packetHeader.synchronizationWord[i] != SYNC_WORD) {
             throw std::invalid_argument("Invalid synchronization word");

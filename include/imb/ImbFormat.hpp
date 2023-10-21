@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cstring>
 #include <arpa/inet.h>
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 namespace m3 {
 namespace imb {
