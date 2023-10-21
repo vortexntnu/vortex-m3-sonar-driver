@@ -84,7 +84,7 @@ struct GPS_QUALITY_PARAS
 // Structure for Packet Header
 struct PacketHeader 
 {
-    uint16_t synchronizationWord[4];    // Synchronization words, always 0x8000
+    uint16_t synchronizationWord[4];    // Synchronization word, always 0x8000
     DataType dataType;                  // Data type
     uint16_t reservedField;             // Reserved field
     uint32_t reservedBytes[10];         // 40 reserved bytes
@@ -111,7 +111,7 @@ struct DataHeader
     uint16_t wProcessingType;                           // Processing type (e.g., standard, EIQ, Profiling, etc.)
     float fBeamList[1024];                              // List of angles for all beams
     float fImageSampleInterval;                         // Image sample interval in seconds
-    uint16_t nImageDestination;                         // Image designation
+    uint16_t nImageDestination;                         // Image designation, 0: main image window, n: zoom image window n, n<=4
     uint8_t bTXPulseType;                               // Tx pulse type (e.g., CW, FM up sweep, FM down sweep)
     uint8_t bAzimuthProcessing;                         // Azimuth processing (0: off, 1: on)
     uint32_t dwModeID;                                  // Unique mode ID, application ID
@@ -130,6 +130,13 @@ struct DataHeader
     char strAppName[128];                               // Application name
     char strTXPulseName[64];                            // TX pulse name
     MUM_TVG_PARAMS sTVGParameters;                      // TVG Parameters
+    float fCompassHeading;                              // Heading of current ping in decimal degrees
+    float fMagneticVariation;                           // Magnetic variation in decimal degrees
+    float fPitch;                                       // Pitch in decimal degrees
+    float fRoll;                                        // Roll in decimal degrees
+    float fDepth;                                       // Depth in meters
+    float fTemperature;                                 // Temperature in degrees Celsius
+    OFFSETS sOffsets;                                   // Deployment configuration including translational and rotational offsets
     double dbLatitude;                                  // Latitude of current ping in decimal degrees
     double dbLongitude;                                 // Longitude of current ping in decimal degrees
     float fTXWST;                                       // TX Window Start Time in seconds

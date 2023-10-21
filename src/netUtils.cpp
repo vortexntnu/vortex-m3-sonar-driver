@@ -3,11 +3,12 @@
 #include <cstdlib> // for std::strtol
 #include <algorithm> // for std::remove_if
 #include <stdexcept> // for std::invalid_argument
+#include <iostream>
 
 bool is_little_endian() 
 {
     uint16_t number = 0x1;
-    char *numPtr = (char*)&number;
+    uint8_t *numPtr = (uint8_t*)&number;
     return (numPtr[0] == 1);
 }
 
@@ -31,8 +32,9 @@ void hexStringToByteArray(const std::string& hex_string, unsigned char* byte_arr
     // Ensure the processed string has an even length
     if (processed_hex_string.length() % 2 != 0) {
         // handle error, e.g., throw exception, return, assert, etc.
-        throw std::invalid_argument("Invalid hex string length after removing whitespace. Must be even.");
-        return;
+        // throw std::invalid_argument("Invalid hex string length after removing whitespace. Must be even.");
+        // return;
+        std::cerr << "Invalid hex string length after removing whitespace. Must be even." << std::endl;
     }
 
     // Adjust the size if the processed string length is shorter than expected

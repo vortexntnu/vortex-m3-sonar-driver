@@ -1,5 +1,6 @@
 #include <imb/ImbFormat.hpp>
 #include "../netUtils.hpp"
+#include <iostream>
 
 namespace m3 {
 namespace imb {
@@ -27,84 +28,90 @@ PacketHeader::PacketHeader(const uint8_t* byteArray)
 
 DataHeader::DataHeader(const uint8_t* byteArray)
 {
+    
     std::memcpy(this, byteArray, sizeof(DataHeader));
+
+    double a = 1500;
+    uint32_t bytes = htonl(a);
+    std::cout << bytes << '\n';
+    std::cout << ntohl(a) << '\n';
     // byte alignment
-    dwBeamformed_Data_Version = ntohl(dwBeamformed_Data_Version);
-    dwSonarID = ntohl(dwSonarID);
-    for (size_t i = 0; i < 8; i++)
-    {
-        dwSonarInfo[i] = ntohl(dwSonarInfo[i]);
-    }
-    dwTimeSec = ntohl(dwTimeSec);
-    dwTimeMillisec = ntohl(dwTimeMillisec);
-    fSoundSpeed = ntohl(fSoundSpeed);
-    nNumImageSample = ntohl(nNumImageSample);
-    fNearRangeMeter = ntohl(fNearRangeMeter);
-    fFarRangeMeter = ntohl(fFarRangeMeter);
-    fSWST = ntohl(fSWST);
-    fSWL = ntohl(fSWL);
-    nNumBeams = ntohs(nNumBeams);
-    wProcessingType = ntohs(wProcessingType);
-    for (size_t i = 0; i < 1024; i++)
-    {
-        fBeamList[i] = ntohl(fBeamList[i]);
-    }
-    fImageSampleInterval = ntohl(fImageSampleInterval);
-    nImageDestination = ntohs(nImageDestination);
-    dwModeID = ntohl(dwModeID);
-    nNumHybridPRIs = ntohs(nNumHybridPRIs);
-    nHybridIndex = ntohs(nHybridIndex);
-    nPhaseSeqLength = ntohs(nPhaseSeqLength);
-    nPhaseSeqIndex = ntohs(nPhaseSeqIndex);
-    nNumImages = ntohs(nNumImages);
-    nSubImageIndex = ntohs(nSubImageIndex);
-    dwFrequency = ntohl(dwFrequency);
-    dwPulseLength = ntohl(dwPulseLength);
-    dwPingNumber = ntohl(dwPingNumber);
-    fRxFilterBW = ntohl(fRxFilterBW);
-    fRxNominalResolution = ntohl(fRxNominalResolution);
-    fPulseRepFreq = ntohl(fPulseRepFreq);
-    sTVGParameters.factorA = ntohs(sTVGParameters.factorA);
-    sTVGParameters.factorB = ntohs(sTVGParameters.factorB);
-    sTVGParameters.factorC = ntohl(sTVGParameters.factorC);
-    sTVGParameters.factorL = ntohl(sTVGParameters.factorL);
-    dbLatitude = ntohd(dbLatitude);
-    dbLongitude = ntohd(dbLongitude);
-    fTXWST = ntohl(fTXWST);
-    fInternalSensorHeading = ntohl(fInternalSensorHeading);
-    fInternalSensorPitch = ntohl(fInternalSensorPitch);
-    fInternalSensorRoll = ntohl(fInternalSensorRoll);
-    for (size_t i = 0; i < 3; i++)
-    {
-        sAxesRotatorOffsets[i].fOffsetA = ntohl(sAxesRotatorOffsets[i].fOffsetA);
-        sAxesRotatorOffsets[i].fOffsetB = ntohl(sAxesRotatorOffsets[i].fOffsetB);
-        sAxesRotatorOffsets[i].fOffsetR = ntohl(sAxesRotatorOffsets[i].fOffsetR);
-        sAxesRotatorOffsets[i].fAngle = ntohl(sAxesRotatorOffsets[i].fAngle);
-    }
-    nStartElement = ntohs(nStartElement);
-    nEndElement = ntohs(nEndElement);
-    fLocalTimeOffset = ntohl(fLocalTimeOffset);
-    fVesselSOG = ntohl(fVesselSOG);
-    fHeave = ntohl(fHeave);
-    fPRIMinRange = ntohl(fPRIMinRange);
-    fPRIMaxRange = ntohl(fPRIMaxRange);
-    fAltitude = ntohl(fAltitude);
-    fHeightGeoidAbvEllipsoid = ntohl(fHeightGeoidAbvEllipsoid);
-    sRealTimeSoundSpeed.fRaw = ntohl(sRealTimeSoundSpeed.fRaw);
-    sRealTimeSoundSpeed.fFiltered = ntohl(sRealTimeSoundSpeed.fFiltered);
-    sRealTimeSoundSpeed.fApplied = ntohl(sRealTimeSoundSpeed.fApplied);
-    sRealTimeSoundSpeed.fThreshold = ntohl(sRealTimeSoundSpeed.fThreshold);
-    sProfilingDepthTracking.nRangeDeepLimitPercentage = ntohs(sProfilingDepthTracking.nRangeDeepLimitPercentage);
-    sProfilingDepthTracking.nRangeShallowLimitPercentage = ntohs(sProfilingDepthTracking.nRangeShallowLimitPercentage);
-    sProfilingDepthTracking.nMinPingRateInHz = ntohs(sProfilingDepthTracking.nMinPingRateInHz);
-    sGPSQualityParas.wQualIndicator = ntohs(sGPSQualityParas.wQualIndicator);
-    sGPSQualityParas.wNSat = ntohs(sGPSQualityParas.wNSat);
-    sGPSQualityParas.fHorizDilution = ntohl(sGPSQualityParas.fHorizDilution);
-    sGPSQualityParas.wPosFixQualityCm = ntohs(sGPSQualityParas.wPosFixQualityCm);
-    b3DScan = ntohl(b3DScan);
-    b3DScanAxis = ntohl(b3DScanAxis);
-    fROV_Altitude = ntohl(fROV_Altitude);
-    fConductivity = ntohl(fConductivity);
+    // dwBeamformed_Data_Version = ntohl(dwBeamformed_Data_Version);
+    // dwSonarID = ntohl(dwSonarID);
+    // for (size_t i = 0; i < 8; i++)
+    // {
+        // dwSonarInfo[i] = ntohl(dwSonarInfo[i]);
+    // }
+    // dwTimeSec = ntohl(dwTimeSec);
+    // dwTimeMillisec = ntohl(dwTimeMillisec);
+    // fSoundSpeed = ntohl(fSoundSpeed);
+    // nNumImageSample = ntohl(nNumImageSample);
+    // fNearRangeMeter = ntohl(fNearRangeMeter);
+    // fFarRangeMeter = ntohl(fFarRangeMeter);
+    // fSWST = ntohl(fSWST);
+    // fSWL = ntohl(fSWL);
+    // nNumBeams = ntohs(nNumBeams);
+    // wProcessingType = ntohs(wProcessingType);
+    // for (size_t i = 0; i < 1024; i++)
+    // {
+    //     fBeamList[i] = ntohl(fBeamList[i]);
+    // }
+    // fImageSampleInterval = ntohl(fImageSampleInterval);
+    // nImageDestination = ntohs(nImageDestination);
+    // dwModeID = ntohl(dwModeID);
+    // nNumHybridPRIs = ntohs(nNumHybridPRIs);
+    // nHybridIndex = ntohs(nHybridIndex);
+    // nPhaseSeqLength = ntohs(nPhaseSeqLength);
+    // nPhaseSeqIndex = ntohs(nPhaseSeqIndex);
+    // nNumImages = ntohs(nNumImages);
+    // nSubImageIndex = ntohs(nSubImageIndex);
+    // dwFrequency = ntohl(dwFrequency);
+    // dwPulseLength = ntohl(dwPulseLength);
+    // dwPingNumber = ntohl(dwPingNumber);
+    // fRxFilterBW = ntohl(fRxFilterBW);
+    // fRxNominalResolution = ntohl(fRxNominalResolution);
+    // fPulseRepFreq = ntohl(fPulseRepFreq);
+    // sTVGParameters.factorA = ntohs(sTVGParameters.factorA);
+    // sTVGParameters.factorB = ntohs(sTVGParameters.factorB);
+    // sTVGParameters.factorC = ntohl(sTVGParameters.factorC);
+    // sTVGParameters.factorL = ntohl(sTVGParameters.factorL);
+    // dbLatitude = ntohd(dbLatitude);
+    // dbLongitude = ntohd(dbLongitude);
+    // fTXWST = ntohl(fTXWST);
+    // fInternalSensorHeading = ntohl(fInternalSensorHeading);
+    // fInternalSensorPitch = ntohl(fInternalSensorPitch);
+    // fInternalSensorRoll = ntohl(fInternalSensorRoll);
+    // for (size_t i = 0; i < 3; i++)
+    // {
+    //     sAxesRotatorOffsets[i].fOffsetA = ntohl(sAxesRotatorOffsets[i].fOffsetA);
+    //     sAxesRotatorOffsets[i].fOffsetB = ntohl(sAxesRotatorOffsets[i].fOffsetB);
+    //     sAxesRotatorOffsets[i].fOffsetR = ntohl(sAxesRotatorOffsets[i].fOffsetR);
+    //     sAxesRotatorOffsets[i].fAngle = ntohl(sAxesRotatorOffsets[i].fAngle);
+    // }
+    // nStartElement = ntohs(nStartElement);
+    // nEndElement = ntohs(nEndElement);
+    // fLocalTimeOffset = ntohl(fLocalTimeOffset);
+    // fVesselSOG = ntohl(fVesselSOG);
+    // fHeave = ntohl(fHeave);
+    // fPRIMinRange = ntohl(fPRIMinRange);
+    // fPRIMaxRange = ntohl(fPRIMaxRange);
+    // fAltitude = ntohl(fAltitude);
+    // fHeightGeoidAbvEllipsoid = ntohl(fHeightGeoidAbvEllipsoid);
+    // sRealTimeSoundSpeed.fRaw = ntohl(sRealTimeSoundSpeed.fRaw);
+    // sRealTimeSoundSpeed.fFiltered = ntohl(sRealTimeSoundSpeed.fFiltered);
+    // sRealTimeSoundSpeed.fApplied = ntohl(sRealTimeSoundSpeed.fApplied);
+    // sRealTimeSoundSpeed.fThreshold = ntohl(sRealTimeSoundSpeed.fThreshold);
+    // sProfilingDepthTracking.nRangeDeepLimitPercentage = ntohs(sProfilingDepthTracking.nRangeDeepLimitPercentage);
+    // sProfilingDepthTracking.nRangeShallowLimitPercentage = ntohs(sProfilingDepthTracking.nRangeShallowLimitPercentage);
+    // sProfilingDepthTracking.nMinPingRateInHz = ntohs(sProfilingDepthTracking.nMinPingRateInHz);
+    // sGPSQualityParas.wQualIndicator = ntohs(sGPSQualityParas.wQualIndicator);
+    // sGPSQualityParas.wNSat = ntohs(sGPSQualityParas.wNSat);
+    // sGPSQualityParas.fHorizDilution = ntohl(sGPSQualityParas.fHorizDilution);
+    // sGPSQualityParas.wPosFixQualityCm = ntohs(sGPSQualityParas.wPosFixQualityCm);
+    // b3DScan = ntohl(b3DScan);
+    // b3DScanAxis = ntohl(b3DScanAxis);
+    // fROV_Altitude = ntohl(fROV_Altitude);
+    // fConductivity = ntohl(fConductivity);
 }
 
 DataBody::DataBody(const uint8_t* byteArray, uint16_t nNumBeams, uint16_t nNumSamples, DataType dataType) 
