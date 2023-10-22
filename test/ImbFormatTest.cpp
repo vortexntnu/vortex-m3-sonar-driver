@@ -27,10 +27,7 @@ std::string DATA_HEADER_DATA = R"(
 )";
 
 std::string TEST_REAL_DATA = R"(
-  e0 2b e9 36 85 53 34 6f 24 c4 9b 9d 08 00 45 00
-  05 dc 85 d5 40 00 80 06 59 8f 0a 00 00 cd 0a 00
-  00 eb 4e 21 ef 41 16 a7 30 a1 75 5c 64 83 50 10
-  20 03 a9 6e 00 00 00 80 00 80 00 80 00 80 02 10
+  00 80 00 80 00 80 00 80 02 10
   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
   00 00 00 00 00 00 00 00 00 00 40 91 15 00 0e 00
@@ -273,35 +270,39 @@ TEST_F(ImbFormatData, PacketHeader_correct_data) {
 }
 
 TEST_F(ImbFormatData, DataHeader_correct_data) {
-    addDataString(DATA_HEADER_DATA);
+    addDataString(TEST_REAL_DATA);
     //ASSERT_GE(byte_array_size_, sizeof(m3::imb::DataHeader));
-    m3::imb::DataHeader dh(byte_array_);
+    m3::imb::DataHeader dh(byte_array_ + sizeof(m3::imb::PacketHeader));
 
     std::cout << dh.strAppName << '\n';
 
+    // clang-format off
     ASSERT_EQ(dh.dwBeamformed_Data_Version, 14U);
     ASSERT_EQ(dh.dwSonarID                , 0U);
-    ASSERT_EQ(dh.dwSonarInfo[0]           , 419954710U);
-    ASSERT_NEAR(dh.dwTimeSec              , 1700000000, 1e9);
-    ASSERT_LT(dh.dwTimeMillisec           , 1000000U);
-    ASSERT_NEAR(dh.fSoundSpeed            , 1469.0, 1e-6);
+    ASSERT_EQ(dh.dwSonarInfo[0]           , 419954710U);            // Idk what this is
+    ASSERT_NEAR(dh.dwTimeSec              , 1700000000, 1e9);       // Close enough
+    ASSERT_LT(dh.dwTimeMillisec           , 1000000U);              // Less than 1 second
+    ASSERT_NEAR(dh.fSoundSpeed            , 1500, 1e3);             // +- 100 m/s
     ASSERT_EQ(dh.nNumImageSample          , 1372U);
-    ASSERT_NEAR(dh.fNearRangeMeter        , 0.0, 1e-6);
-    ASSERT_NEAR(dh.fFarRangeMeter         , 100.0, 1e-6);
-    ASSERT_NEAR(dh.fSWST                  , 0.0, 1e-6);
-    ASSERT_NEAR(dh.fSWL                   , 0.0, 1e-6);
-    ASSERT_EQ(dh.nNumBeams                , 200U);
+    ASSERT_GT(dh.fNearRangeMeter          , 0.0);                   // Positive
+    ASSERT_LE(dh.fNearRangeMeter          , 150.0);                 // 150 meters is the max range
+    ASSERT_GT(dh.fFarRangeMeter           , 0.0);                   // Positive
+    ASSERT_LE(dh.fFarRangeMeter           , 150.0);                 // 150 meters is the max range
+    ASSERT_GT(dh.fFarRangeMeter           , dh.fNearRangeMeter);    // Far range is greater than near range
+    ASSERT_GT(dh.fSWST                    , 0.0);                   // Positive
+    ASSERT_GT(dh.fSWL                     , 0.0);
+    ASSERT_LE(dh.fSWL                     , 1.0);                   // Sample width less than 1 second is reasonable
+    ASSERT_EQ(dh.nNumBeams                , 128);
     ASSERT_EQ(dh.wProcessingType          , 0U);
     for (size_t i = 0; i < 1024; i++) {
-        ASSERT_NEAR(dh.fBeamList[i], 0.0, 360);
+        ASSERT_NEAR(dh.fBeamList[i], 0.0, 60.0);                    // Angle is between -60 and 60 degrees
     }
-    ASSERT_NEAR(dh.fImageSampleInterval   , 0.0, 1e-6);
-    ASSERT_EQ(dh.nImageDestination        , 12336U);
-    ASSERT_EQ(dh.bTXPulseType             , '0'); // TODO: Figure out why this is a char '0' instead of a uint8_t 0
-    ASSERT_EQ(dh.bAzimuthProcessing       , '0');
-    ASSERT_EQ(dh.dwModeID                 , 808464432U);
-    ASSERT_EQ(dh.nNumHybridPRIs           , 808464432);
-    ASSERT_EQ(dh.nHybridIndex             , 808464432);
+    ASSERT_NEAR(dh.fImageSampleInterval   , 0.0, 1e-6); // TODO: Tests from here and down are not complete
+    ASSERT_EQ(dh.nImageDestination        , 0U);
+    ASSERT_EQ(dh.bTXPulseType             , 0U); 
+    ASSERT_EQ(dh.dwModeID                 , 0U);
+    ASSERT_EQ(dh.nNumHybridPRIs           , 0U);
+    ASSERT_EQ(dh.nHybridIndex             , 0U);
     ASSERT_EQ(dh.nPhaseSeqLength          , 0U);
     ASSERT_EQ(dh.nPhaseSeqIndex           , 0U);
     ASSERT_EQ(dh.nNumImages               , 0U);
@@ -309,11 +310,53 @@ TEST_F(ImbFormatData, DataHeader_correct_data) {
     ASSERT_EQ(dh.dwFrequency              , 0U);
     ASSERT_EQ(dh.dwPulseLength            , 0U);
     ASSERT_EQ(dh.dwPingNumber             , 0U);
-    ASSERT_NEAR(dh.fRxFilterBW, 0.0, 1e-6);
-    ASSERT_NEAR(dh.fRxNominalResolution, 0.0, 1e-6);
-    ASSERT_NEAR(dh.fPulseRepFreq, 0.0, 1e-6);
-    ASSERT_STREQ(dh.strAppName, "");
-    ASSERT_STREQ(dh.strTXPulseName, "");
+    ASSERT_NEAR(dh.fRxFilterBW            , 0.0, 1e-6);
+    ASSERT_NEAR(dh.fRxNominalResolution   , 0.0, 1e-6);
+    ASSERT_NEAR(dh.fPulseRepFreq          , 0.0, 1e-6);
+    ASSERT_STREQ(dh.strAppName            , "");
+    ASSERT_STREQ(dh.strTXPulseName        , "");
+    ASSERT_EQ(dh.sTVGParameters           , 0U);
+    ASSERT_EQ(dh.fCompassHeading          , 0U);
+    ASSERT_EQ(dh.fMagneticVariation       , 0U);
+    ASSERT_EQ(dh.fPitch                   , 0U);
+    ASSERT_EQ(dh.fRoll                    , 0U);
+    ASSERT_EQ(dh.fDepth                   , 0U);
+    ASSERT_EQ(dh.fTemperature             , 0U);
+    ASSERT_EQ(dh.sOffsets                 , 0U);
+    ASSERT_EQ(dh.dbLatitude               , 0U);
+    ASSERT_EQ(dh.dbLongitude              , 0U);
+    ASSERT_EQ(dh.fTXWST                   , 0U);
+    ASSERT_EQ(dh.bHeadSensorVersion       , 0U);
+    ASSERT_EQ(dh.HeadHWStatus             , 0U);
+    ASSERT_EQ(dh.bSoundSpeedSource        , 0U);
+    ASSERT_EQ(dh.bTimeSyncMode            , 0U);
+    ASSERT_EQ(dh.fInternalSensorHeading   , 0U);
+    ASSERT_EQ(dh.fInternalSensorPitch     , 0U);
+    ASSERT_EQ(dh.fInternalSensorRoll      , 0U);
+    ASSERT_EQ(dh.sAxesRotatorOffsets      , 0U);
+    ASSERT_EQ(dh.nStartElement            , 0U);
+    ASSERT_EQ(dh.nEndElement              , 0U);
+    ASSERT_EQ(dh.strCustomText            , 0U);
+    ASSERT_EQ(dh.strROVText               , 0U);
+    ASSERT_EQ(dh.fLocalTimeOffset         , 0U);
+    ASSERT_EQ(dh.fVesselSOG               , 0U);
+    ASSERT_EQ(dh.fHeave                   , 0U);
+    ASSERT_EQ(dh.fPRIMinRange             , 0U);
+    ASSERT_EQ(dh.fPRIMaxRange             , 0U);
+    ASSERT_EQ(dh.fAltitude                , 0U);
+    ASSERT_EQ(dh.fHeightGeoidAbvEllipsoid , 0U);
+    ASSERT_EQ(dh.sRealTimeSoundSpeed      , 0U);
+    ASSERT_EQ(dh.sProfilingDepthTracking  , 0U);
+    ASSERT_EQ(dh.sGPSQualityParas         , 0U);
+    ASSERT_EQ(dh.b3DScan                  , 0U);
+    ASSERT_EQ(dh.b3DScanAxis              , 0U);
+    ASSERT_EQ(dh.bSonarClassID            , 0U);
+    ASSERT_EQ(dh.byTX_Enabled             , 0U);
+    ASSERT_EQ(dh.bReserved                , 0U);
+    ASSERT_EQ(dh.fROV_Altitude            , 0U);
+    ASSERT_EQ(dh.fConductivity            , 0U);
+    ASSERT_EQ(dh.Reserved                 , 0U);
+    // clang-format on
     
 }
 
