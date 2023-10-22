@@ -6,7 +6,7 @@ namespace m3 {
 namespace imb {
 
 
-static constexpr uint16_t SYNC_WORD = 0x8000;
+static constexpr uint16_t SYNC_WORD = 0x8000; // Always 4x 0x8000 at the start of each packet
 
 
 
