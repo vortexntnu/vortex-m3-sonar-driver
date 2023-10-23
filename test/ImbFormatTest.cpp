@@ -3,7 +3,7 @@
 #include <limits>
 #include <inttypes.h>
 #include <imb/ImbFormat.hpp>
-#include "../src/netUtils.hpp"
+#include "../src/utils/netUtils.hpp"
 
 std::string PACKET_HEADER_DATA = R"(
     0080 0080 0080 0080

@@ -22,7 +22,7 @@ add_executable(${PROJECT_NAME}_main
     src/main.cpp
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
-    src/netUtils.cpp
+    src/utils/netUtils.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}_main
     Eigen3
@@ -54,7 +54,7 @@ if(BUILD_TESTING)
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
     src/imb/imbFormat.cpp
-    src/netUtils.cpp
+    src/utils/netUtils.cpp
   )
   target_include_directories(${PROJECT_NAME}_test PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
