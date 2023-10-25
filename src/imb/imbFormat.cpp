@@ -1,7 +1,8 @@
 #include <imb/ImbFormat.hpp>
-#include "../netUtils.hpp"
+#include "../utils/netUtils.hpp"
 #include <iostream>
 
+using m3::utils::ntohd;
 namespace m3 {
 namespace imb {
 

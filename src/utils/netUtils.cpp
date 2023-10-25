@@ -5,6 +5,9 @@
 #include <stdexcept> // for std::invalid_argument
 #include <iostream>
 
+namespace m3 {
+namespace utils {
+
 bool is_little_endian() 
 {
     uint16_t number = 0x1;
@@ -51,3 +54,6 @@ void hexStringToByteArray(const std::string& hex_string, unsigned char* byte_arr
         byte_array[i] = 0;
     }
 }
+
+} // namespace utils
+} // namespace m3
