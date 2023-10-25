@@ -70,13 +70,12 @@ class RingBuffer {
     /**
      * Writes to the buffer safely, the method will keep blocking until the
      * there is a space available within the buffer.
-     */
-    template <class BufferWriteFn>
-    void write(BufferWriteFn&& buffer_write) {
+     */y
+    void write(T& data) {
         std::unique_lock<std::mutex> lock(mutex);
         fullCondition.wait(lock,
                            [this] { return active_items_count < capacity(); });
-        buffer_write(&buffer[write_idx]);
+        buffer[write_idx] = data;
         write_idx = (write_idx + 1) % capacity();
         ++active_items_count;
         emptyCondition.notify_one();
@@ -86,10 +85,9 @@ class RingBuffer {
      * Writes to the buffer safely, if there is not space left then this method
      * will overite the last item.
      */
-    template <class BufferWriteFn>
-    void write_overwrite(BufferWriteFn&& buffer_write) {
+    void write_overwrite(T& data) {
         std::unique_lock<std::mutex> lock(mutex);
-        buffer_write(&buffer[write_idx]);
+        buffer[write_idx] = data;
         write_idx = (write_idx + 1) % capacity();
         if (active_items_count < capacity()) {
             ++active_items_count;
@@ -103,14 +101,14 @@ class RingBuffer {
      * Gives access to read the buffer through a callback, the method will block
      * until there is something to read is available.
      */
-    template <typename BufferReadFn>
-    void read(BufferReadFn&& buffer_read) {
+    T read() {
         std::unique_lock<std::mutex> lock(mutex);
         emptyCondition.wait(lock, [this] { return active_items_count > 0; });
-        buffer_read(&buffer[read_idx]);
+        T data = buffer[read_idx];
         read_idx = (read_idx + 1) % capacity();
         --active_items_count;
         fullCondition.notify_one();
+        return data;
     }
 
     /**
