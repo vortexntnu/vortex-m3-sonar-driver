@@ -1,109 +1,148 @@
+/**
+ * @file thread_safe_ring_buffer.h
+ * @brief File contains thread safe implementation of a ring buffer
+ */
+
 #pragma once
 
-#include <vector>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <vector>
 
 namespace m3 {
 namespace utils {
-
-template<typename T>
+/**
+ * @class ThreadSafeRingBuffer thread safe ring buffer.
+ */
+template <typename T>
 class RingBuffer {
-public:
-    explicit RingBuffer(size_t size);
-    void put(T item);
-    T get();
-    void reset();
-    bool is_empty() const;
-    bool is_full() const;
-    size_t capacity() const;
-    size_t size() const;
+   public:
+    RingBuffer(size_t items_count)
+        : buffer(items_count),
+          max_items_count(items_count),
+          active_items_count(0),
+          write_idx(0),
+          read_idx(0) {}
 
-private:
-    std::vector<T> buffer;
-    size_t head;
-    size_t tail;
-    const size_t max_size;
-    bool full;
-    mutable std::mutex mtx; // 'mutable' is used here to allow the modification of 'mtx' inside 'const' methods
-    std::condition_variable cond;
-};
+    /**
+     * Gets the maximum number of items that this ring buffer can hold.
+     */
+    size_t capacity() const { return max_items_count; }
 
-
-// Implementation
-// This may alternatively be defined in a .tpp file and included at the bottom of the header file
-template<typename T>
-RingBuffer<T>::RingBuffer(size_t size) : max_size(size), buffer(size), head(0), tail(0), full(false) {}
-
-template<typename T>
-void RingBuffer<T>::put(T item) {
-    std::unique_lock<std::mutex> lock(mtx);
-    cond.wait(lock, [this](){ return !full; }); // Wait if the buffer is full
-
-    buffer[head] = item;
-    if(full) {
-        tail = (tail + 1) % max_size;
+    /**
+     * Gets the number of item that currently occupy the ring buffer. This
+     * number would vary between 0 and the capacity().
+     *
+     * @remarks
+     *  if returned value was 0 or the value was equal to the buffer capacity(),
+     *  this does not guarantee that a subsequent call to read() or write()
+     *  wouldn't cause the calling thread to be blocked.
+     */
+    size_t size() const {
+        std::lock_guard<std::mutex> lock(mutex);
+        return active_items_count;
     }
 
-    head = (head + 1) % max_size;
+    /**
+     * Checks if the ring buffer is empty.
+     *
+     * @remarks
+     *  if empty() returns true this does not guarantee that calling the write()
+     *  operation directly right after wouldn't block the calling thread.
+     */
+    bool empty() const {
+        std::lock_guard<std::mutex> lock(mutex);
+        return active_items_count == 0;
+    }
 
-    full = head == tail;
-    lock.unlock();
-    cond.notify_all(); // Notify the consumer that data is available
-}
+    /**
+     * Checks if the ring buffer is full.
+     *
+     * @remarks
+     *  if full() returns true this does not guarantee that calling the read()
+     *  operation directly right after wouldn't block the calling thread.
+     */
+    bool full() const {
+        std::lock_guard<std::mutex> lock(mutex);
+        return active_items_count == max_items_count;
+    }
 
-template<typename T>
-T RingBuffer<T>::get() {
-    std::unique_lock<std::mutex> lock(mtx);
-    cond.wait(lock, [this](){ return !is_empty(); }); // Wait if the buffer is empty
+    /**
+     * Writes to the buffer safely, the method will keep blocking until the
+     * there is a space available within the buffer.
+     */
+    template <class BufferWriteFn>
+    void write(BufferWriteFn&& buffer_write) {
+        std::unique_lock<std::mutex> lock(mutex);
+        fullCondition.wait(lock,
+                           [this] { return active_items_count < capacity(); });
+        buffer_write(&buffer[write_idx]);
+        write_idx = (write_idx + 1) % capacity();
+        ++active_items_count;
+        emptyCondition.notify_one();
+    }
 
-    // Read data and move the tail forward
-    auto val = buffer[tail];
-    full = false;
-    tail = (tail + 1) % max_size;
-
-    lock.unlock();
-    cond.notify_all(); // Notify the producer that space is available
-
-    return val;
-}
-
-template<typename T>
-void RingBuffer<T>::reset() {
-    std::lock_guard<std::mutex> lock(mtx);
-    head = tail;
-    full = false;
-}
-
-template<typename T>
-bool RingBuffer<T>::is_empty() const {
-    return (!full && (head == tail));
-}
-
-template<typename T>
-bool RingBuffer<T>::is_full() const {
-    return full;
-}
-
-template<typename T>
-size_t RingBuffer<T>::capacity() const {
-    return max_size;
-}
-
-template<typename T>
-size_t RingBuffer<T>::size() const {
-    size_t size = max_size;
-
-    if(!full) {
-        if(head >= tail) {
-            size = head - tail;
+    /**
+     * Writes to the buffer safely, if there is not space left then this method
+     * will overite the last item.
+     */
+    template <class BufferWriteFn>
+    void write_overwrite(BufferWriteFn&& buffer_write) {
+        std::unique_lock<std::mutex> lock(mutex);
+        buffer_write(&buffer[write_idx]);
+        write_idx = (write_idx + 1) % capacity();
+        if (active_items_count < capacity()) {
+            ++active_items_count;
         } else {
-            size = max_size + head - tail;
+            read_idx = (read_idx + 1) % capacity();
+        }
+        emptyCondition.notify_one();
+    }
+
+    /**
+     * Gives access to read the buffer through a callback, the method will block
+     * until there is something to read is available.
+     */
+    template <typename BufferReadFn>
+    void read(BufferReadFn&& buffer_read) {
+        std::unique_lock<std::mutex> lock(mutex);
+        emptyCondition.wait(lock, [this] { return active_items_count > 0; });
+        buffer_read(&buffer[read_idx]);
+        read_idx = (read_idx + 1) % capacity();
+        --active_items_count;
+        fullCondition.notify_one();
+    }
+
+    /**
+     * Gives access to read the buffer through a callback, if buffer is
+     * inaccessible the method will timeout and buffer_read gets a nullptr.
+     */
+    template <typename BufferReadFn>
+    void read_timeout(BufferReadFn&& buffer_read,
+                      std::chrono::seconds timeout) {
+        std::unique_lock<std::mutex> lock(mutex);
+        if (emptyCondition.wait_for(
+                lock, timeout, [this] { return active_items_count > 0; })) 
+        {
+            buffer_read(&buffer[read_idx]);
+            read_idx = (read_idx + 1) % capacity();
+            --active_items_count;
+            fullCondition.notify_one();
+        } else {
+            buffer_read((T*)nullptr);
         }
     }
 
-    return size;
-}
+   private:
+    std::vector<T> buffer;
+    size_t max_items_count;
+    size_t active_items_count;
+    size_t write_idx;
+    size_t read_idx;
+    mutable std::mutex mutex;
+    std::condition_variable fullCondition;
+    std::condition_variable emptyCondition;
+};
 
-} // namespace utils
-} // namespace m3
+}  // namespace utils
+}  // namespace m3

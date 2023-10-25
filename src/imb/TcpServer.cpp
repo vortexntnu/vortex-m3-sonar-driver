@@ -100,7 +100,9 @@ void TcpServer::handleClient(int client_socket) {
 
             if (inMessage) {
                 // If a complete message is detected, add it to the ring buffer
-                ringBuffer.put(message);
+                ringBuffer.write_overwrite([this, message](std::vector<uint8_t>* buffer) {
+                    buffer->swap(message);
+                });
                 inMessage = false;
             }
         }
