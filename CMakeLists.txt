@@ -23,7 +23,11 @@ add_executable(${PROJECT_NAME}_main
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
     src/utils/netUtils.cpp
+    
 )
+# add_executable(${PROJECT_NAME}_tcp_server
+#   src/imb/TcpServer.cpp
+# )
 ament_target_dependencies(${PROJECT_NAME}_main
     Eigen3
 )
@@ -50,11 +54,13 @@ if(BUILD_TESTING)
     test/XmlResponseParserTest.cpp
     test/ImbFormatTest.cpp
     test/netUtilsTest.cpp
+    tes/tcpTest.cpp
 
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
     src/imb/imbFormat.cpp
     src/utils/netUtils.cpp
+    src/imb/TcpServer.cpp
   )
   target_include_directories(${PROJECT_NAME}_test PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -6,8 +6,10 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-TcpServer::TcpServer(const std::string& ipAddress, int port, m3::utils::RingBuffer<std::vector<uint8_t>>& ringBuffer) 
-    : port(port), server_fd(0), running(false), ringBuffer(ringBuffer) {
+namespace m3{
+namespace tcp{
+TcpServer::TcpServer(const std::string& ipAddress, int port) 
+    : port(port), server_fd(0), running(false) {
     setup(ipAddress, port);
 }
 
@@ -100,7 +102,6 @@ void TcpServer::handleClient(int client_socket) {
 
             if (inMessage) {
                 // If a complete message is detected, add it to the ring buffer
-                ringBuffer.put(message);
                 inMessage = false;
             }
         }
@@ -109,4 +110,6 @@ void TcpServer::handleClient(int client_socket) {
     } catch (const std::exception& e) {
         std::cerr << "Exception in client handling thread: " << e.what() << std::endl;
     }
+}
+}
 }
