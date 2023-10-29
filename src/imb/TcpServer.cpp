@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <inttypes.h>
 
 namespace m3{
 namespace tcp{
@@ -75,7 +76,7 @@ void TcpServer::handleClient(int client_socket) {
         uint8_t buffer[1024] = {0};
         std::vector<uint8_t> message;
         bool inMessage = false;
-
+        int counter = 0;
         while (running) {
             ssize_t valread = read(client_socket, buffer, 1024);
 
@@ -94,6 +95,7 @@ void TcpServer::handleClient(int client_socket) {
                     }
                 } else {
                     message.push_back(buffer[i]);
+                    printf("%" PRIu8 "\n", message);
 
                     // Add your logic here to check for the end of the message or message completeness
                     // and reset inMessage flag when a whole message is received
