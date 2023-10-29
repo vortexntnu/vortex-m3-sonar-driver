@@ -70,7 +70,7 @@ class RingBuffer {
     /**
      * Writes to the buffer safely, the method will keep blocking until the
      * there is a space available within the buffer.
-     */y
+     */
     void write(T& data) {
         std::unique_lock<std::mutex> lock(mutex);
         fullCondition.wait(lock,
