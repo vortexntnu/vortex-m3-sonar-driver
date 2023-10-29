@@ -54,7 +54,7 @@ if(BUILD_TESTING)
     test/XmlResponseParserTest.cpp
     test/ImbFormatTest.cpp
     test/netUtilsTest.cpp
-    tes/tcpTest.cpp
+    test/tcpTest.cpp
 
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
