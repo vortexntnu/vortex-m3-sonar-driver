@@ -25,9 +25,9 @@ add_executable(${PROJECT_NAME}_main
     src/utils/netUtils.cpp
     
 )
-# add_executable(${PROJECT_NAME}_tcp_server
-#   src/imb/TcpServer.cpp
-# )
+add_executable(M3Listener
+  src/imb/M3SonarListener.cpp
+)
 ament_target_dependencies(${PROJECT_NAME}_main
     Eigen3
 )
@@ -42,6 +42,7 @@ install(
 
 # Install the library
 install(TARGETS 
+    M3Listener
     ${PROJECT_NAME}_main
     DESTINATION lib/${PROJECT_NAME}
 )
@@ -55,7 +56,7 @@ if(BUILD_TESTING)
     test/ImbFormatTest.cpp
     test/netUtilsTest.cpp
     test/tcpTest.cpp
-
+    test/M3SonarTest.cpp
     src/api/m3CommandGenerator.cpp
     src/api/m3ResponseParser.cpp
     src/imb/imbFormat.cpp
