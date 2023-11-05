@@ -91,6 +91,7 @@ struct PacketHeader
     uint32_t packetBodySize;            // Packet body size
 
     PacketHeader(const uint8_t* byteArray);
+    // PacketHeader();
 };
 
 // Structure for Data Header

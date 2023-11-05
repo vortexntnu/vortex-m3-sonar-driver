@@ -27,6 +27,7 @@ add_executable(${PROJECT_NAME}_main
 )
 add_executable(M3Listener
   src/imb/M3SonarListener.cpp
+  src/imb/imbFormat.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}_main
     Eigen3

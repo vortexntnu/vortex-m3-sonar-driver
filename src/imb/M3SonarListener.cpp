@@ -9,6 +9,11 @@
 #include <exception>
 #include <imb/ImbFormat.hpp>
 #include <cstdint>
+#include <vector>
+
+#define SYNC_WORD_0 0x80
+#define SYNC_WORD_1 0x00
+
 namespace m3{
 
 M3SonarListener::M3SonarListener(std::string addr, u_int16_t port) : addr_ (addr), port_ (port) {
@@ -32,45 +37,70 @@ void M3SonarListener::connect_to_sonar(){
         close(client_socket_);
         throw std::runtime_error("Error connecting to server");
     }
-    std::cout << "Finished connecting";
+    std::cout << "Finished connecting" << std::endl;
 }
 
 void M3SonarListener::run_listener() {
-    // std::cout << std::hex << "11";
+    std::vector<uint8_t> packet_data;
     while (true) {
         // Receive data from the server
-        int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0);
-        if (bytes_read == -1) {
+        int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
+        // std::cout << "Received " << bytes_read << " bytes!" << std::endl;
+        
+        if (bytes_read == -1) { //Cannot read data
             std::cerr << "Error receiving data from the server" << std::endl;
             break;
-        } else if (bytes_read == 0) {
-            // Connection closed by the server
+        } else if (bytes_read == 0) { // Connection closed by the server
             std::cout << "Server closed the connection" << std::endl;
             break;
         } else {
-            buffer_[bytes_read] = '\0';
-            // std::cout << std::hex << buffer_ << std::endl;
+            // buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended
 
-            // for (int i = 0; i < 1024; i++){
-            //     int hexed = int(buffer_[i]);
-            //     int next = int(buffer_[i+1]);
-            //     if (next == 0x80 && hexed == 0x00){
-            //         std::cout << "Synched at " << i << std::endl;
-            //     }
+            bool is_header = (int(buffer_[0]) == SYNC_WORD_1 //Check for synchronization word
+                && int(buffer_[2]) == SYNC_WORD_1
+                && int(buffer_[4]) == SYNC_WORD_1
+                && int(buffer_[6]) == SYNC_WORD_1
+                && int(buffer_[1]) == SYNC_WORD_0
+                && int(buffer_[3]) == SYNC_WORD_0
+                && int(buffer_[5]) == SYNC_WORD_0
+                && int(buffer_[7]) == SYNC_WORD_0
+            );
+            if (is_header){ //Packet contains header
+                // std::cout << bytes_read << std::endl;
+                imb::PacketHeader ph(buffer_);
+
+                imb::DataHeader dh(buffer_ + sizeof(imb::PacketHeader));
+
+                imb::DataBody db(buffer_, dh.nNumBeams, dh.nNumImageSample, ph.dataType);
+                // std::memcpy(&ph, buffer_, sizeof(imb::PacketHeader));
+                
+                std::cout << "Data body size: " << ph.packetBodySize;
+                std::cout << "\nAltitude : " << dh.bSoundSpeedSource;
+                std::cout << "\nData header size : " << sizeof(imb::DataHeader);
+                std::cout << "\nSize : " << packet_data.size() << std::endl;
+
+                
+
+
+                // std::cout << "\nCapacity : " << packet_data.capacity();
+
+                packet_data.clear();
+
+                // std::cout << "Received header packet with size "<< bytes_read << std::endl;
+            }
+            else { //Packet contains data
+                for (uint8_t byte : buffer_){
+                    packet_data.push_back(byte);
+                }
+
+                //std::cout << "Received illegal packet with size " << bytes_read << std::endl;
+                // std::cout << "Not header with size " << bytes_read << std::endl;
+            }
+            
+            // if (bytes_read > 1024 * 8){
+            //     // std::cout << bytes_read << std::endl;
             // }
             
-            int first = int(buffer_[1]);
-            int second = int(buffer_[0]);
-            int third = int(buffer_[3]);
-            int fourth = int(buffer_[2]);
-            int fifth = int(buffer_[5]);
-            int sixth = int(buffer_[4]);
-            int seventh = int(buffer_[7]);
-            int eigth = int(buffer_[6]);
-
-            if (first == 0x80 && second == 0x00 && third == 0x80 && fourth == 0x00 && fifth == 0x80 && sixth == 0x00 && seventh == 0x80 && eigth == 0x00){
-                    std::cout << "Hell yeah" << std::endl;
-            }
             // uint8_t sync_word = 0x80;
             // uint8_t sync_word_2 = 0x00;
             // for (size_t i=0; i<8; i+=2) {
@@ -83,7 +113,7 @@ void M3SonarListener::run_listener() {
             // }
             // std::cout << "Received data from server" << std::endl;
             //imb::ImbPacketStructure packet(buffer_);
-
+            
         }
     }
 }
@@ -95,9 +125,8 @@ void M3SonarListener::stop_listener(){
 
 }
 
-int main(int argc, char *argv[]) {
+int main(int, char *argv[]) {
     const char *ip_addr = argv[1];
-
     std::stringstream strValue;
     strValue << argv[2];
     uint16_t port;

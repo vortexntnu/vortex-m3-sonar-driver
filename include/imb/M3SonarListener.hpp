@@ -11,7 +11,7 @@ public:
     const std::string addr_;
     const u_int16_t port_;
     int client_socket_;
-    uint8_t buffer_[1024];
+    uint8_t buffer_[1024 * 64];
     sockaddr_in server_addr_;
     M3SonarListener(std::string addr, u_int16_t port);
     void create_socket();
