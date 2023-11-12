@@ -26,11 +26,14 @@ PacketHeader::PacketHeader(const uint8_t* byteArray)
 //     // don't need to convert reservedField and reservedBytes
 //     // packetBodySize = ntohl(packetBodySize);
 }
-// PacketHeader::PacketHeader(){
+PacketHeader::PacketHeader(){
 
-// }
+}
 DataHeader::DataHeader(const uint8_t* byte_array){
     std::memcpy(this, byte_array, sizeof(DataHeader));
+}
+DataHeader::DataHeader(){
+
 }
 
 // DataHeader::DataHeader(const uint8_t* byteArray)

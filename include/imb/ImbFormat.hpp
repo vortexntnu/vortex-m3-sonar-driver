@@ -91,7 +91,7 @@ struct PacketHeader
     uint32_t packetBodySize;            // Packet body size
 
     PacketHeader(const uint8_t* byteArray);
-    // PacketHeader();
+    PacketHeader();
 };
 
 // Structure for Data Header
@@ -173,6 +173,7 @@ struct DataHeader
     uint8_t Reserved[3796];                             // Reserved field
 
     DataHeader(const uint8_t* byteArray);
+    DataHeader();
 };
 
 

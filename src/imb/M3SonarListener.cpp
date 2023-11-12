@@ -41,7 +41,10 @@ void M3SonarListener::connect_to_sonar(){
 }
 
 void M3SonarListener::run_listener() {
+
+    //Holds all the data from each packet-collection
     std::vector<uint8_t> packet_data;
+    bool first_iter = true;
     while (true) {
         // Receive data from the server
         int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
@@ -54,7 +57,9 @@ void M3SonarListener::run_listener() {
             std::cout << "Server closed the connection" << std::endl;
             break;
         } else {
-            // buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended
+            buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended
+
+            
 
             bool is_header = (int(buffer_[0]) == SYNC_WORD_1 //Check for synchronization word
                 && int(buffer_[2]) == SYNC_WORD_1
@@ -65,36 +70,45 @@ void M3SonarListener::run_listener() {
                 && int(buffer_[5]) == SYNC_WORD_0
                 && int(buffer_[7]) == SYNC_WORD_0
             );
-            if (is_header){ //Packet contains header
-                // std::cout << bytes_read << std::endl;
-                imb::PacketHeader ph(buffer_);
+            if (is_header){ //Packet contains header -> create the object and send it to publisher
+                if(!first_iter){
+                    const uint8_t* start = &packet_data[0]; // grabs the pointer to the first element in the vector which now contains the whole packet
+                    // std::cout << bytes_read << std::endl;
+                    imb::PacketHeader packet_header(start);
 
-                imb::DataHeader dh(buffer_ + sizeof(imb::PacketHeader));
+                    imb::DataHeader data_header(start + sizeof(imb::PacketHeader));
 
-                imb::DataBody db(buffer_, dh.nNumBeams, dh.nNumImageSample, ph.dataType);
-                // std::memcpy(&ph, buffer_, sizeof(imb::PacketHeader));
+                    imb::DataBody data_body(start + sizeof(imb::PacketHeader) + sizeof(imb::DataHeader), data_header.nNumBeams, data_header.nNumImageSample, packet_header.dataType);
+                    // std::memcpy(&ph, buffer_, sizeof(imb::PacketHeader));
+                    
+                    // std::cout << "Data body size: " << packet_header.packetBodySize;
+                    // std::cout << "\nAltitude : " << data_header.bSoundSpeedSource;
+                    // std::cout << "\nData header size : " << sizeof(imb::DataHeader);
+                    // std::cout << "\nSize : " << packet_data.size() << std::endl;
+
+                    // std::cout << data_body.complexData << std::endl;
+
+
+                    // std::cout << "\nCapacity : " << packet_data.capacity();
+
+                    packet_data.clear(); // clear the data
+
+                    // std::cout << "Received header packet with size "<< bytes_read << std::endl;
+                }
+                else{
+                    first_iter = false; //Continue after this iter
+                }
                 
-                std::cout << "Data body size: " << ph.packetBodySize;
-                std::cout << "\nAltitude : " << dh.bSoundSpeedSource;
-                std::cout << "\nData header size : " << sizeof(imb::DataHeader);
-                std::cout << "\nSize : " << packet_data.size() << std::endl;
-
-                
-
-
-                // std::cout << "\nCapacity : " << packet_data.capacity();
-
-                packet_data.clear();
-
-                // std::cout << "Received header packet with size "<< bytes_read << std::endl;
             }
             else { //Packet contains data
-                for (uint8_t byte : buffer_){
-                    packet_data.push_back(byte);
-                }
+                
 
                 //std::cout << "Received illegal packet with size " << bytes_read << std::endl;
                 // std::cout << "Not header with size " << bytes_read << std::endl;
+            }
+
+            for (uint8_t byte : buffer_){ // add all data from the buffer to the vector
+                    packet_data.push_back(byte);
             }
             
             // if (bytes_read > 1024 * 8){
