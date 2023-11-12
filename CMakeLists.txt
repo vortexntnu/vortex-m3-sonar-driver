@@ -13,6 +13,8 @@ endif()
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 # Specify the include directories
 include_directories(include)
@@ -26,15 +28,26 @@ add_executable(${PROJECT_NAME}_main
     
 )
 add_executable(M3Listener
-  src/imb/M3SonarListener.cpp
+  src/M3Driver.cpp
+  src/imb/M3Listener.cpp
   src/imb/imbFormat.cpp
+  src/imb/M3Publisher.cpp
 )
+
 ament_target_dependencies(${PROJECT_NAME}_main
     Eigen3
+)
+
+ament_target_dependencies(M3Listener
+Eigen3
+    rclcpp
+    sensor_msgs
 )
 target_link_libraries(${PROJECT_NAME}_main 
   PUBLIC Eigen3::Eigen
 )
+
+
 # Install the headers
 install(
     DIRECTORY include

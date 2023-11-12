@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 3.5)
+project(vortex-m3-sonar-driver)
+
+#Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+include_directories(include)
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
+add_executable(M3Listener
+    src/imb/M3Listener.cpp
+    src/imb/M3PclPublisher.cpp
+    src/imb/imbFormat.cpp
+)
+ament_target_dependencies(M3Listener rclcpp sensor_msgs Eigen3)
+
+install(TARGETS
+  M3Listener
+  DESTINATION lib/${PROJECT_NAME})
+
+ament_package()

@@ -10,7 +10,8 @@
 
   <depend>librapidxml-dev</depend>
   <depend>eigen</depend>
-  
+  <depend>rclcpp</depend>
+  <depend>sensor_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

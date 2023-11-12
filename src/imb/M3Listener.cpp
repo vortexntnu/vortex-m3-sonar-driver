@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <imb/M3SonarListener.hpp>
+#include <imb/M3Listener.hpp>
 #include <exception>
 #include <imb/ImbFormat.hpp>
 #include <cstdint>
@@ -16,11 +16,11 @@
 
 namespace m3{
 
-M3SonarListener::M3SonarListener(std::string addr, u_int16_t port) : addr_ (addr), port_ (port) {
+M3Listener::M3Listener(std::string addr, u_int16_t port, M3Publisher& publisher) : addr_ (addr), port_ (port), publisher_ (publisher) {
 
 }
 
-void M3SonarListener::create_socket(){
+void M3Listener::create_socket(){
     client_socket_ = socket(AF_INET, SOCK_STREAM, 0);
     if (client_socket_ == -1) {
         throw std::runtime_error("Error creating socket");
@@ -31,7 +31,7 @@ void M3SonarListener::create_socket(){
     server_addr_.sin_addr.s_addr = inet_addr(addr_.c_str());
 }
 
-void M3SonarListener::connect_to_sonar(){
+void M3Listener::connect_to_sonar(){
     std::cout << "Connecting to " << addr_ << " at port " << port_ << std::endl;
     if (connect(client_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_)) == -1) {
         close(client_socket_);
@@ -40,7 +40,7 @@ void M3SonarListener::connect_to_sonar(){
     std::cout << "Finished connecting" << std::endl;
 }
 
-void M3SonarListener::run_listener() {
+void M3Listener::run_listener() {
 
     //Holds all the data from each packet-collection
     std::vector<uint8_t> packet_data;
@@ -80,7 +80,9 @@ void M3SonarListener::run_listener() {
 
                     imb::DataBody data_body(start + sizeof(imb::PacketHeader) + sizeof(imb::DataHeader), data_header.nNumBeams, data_header.nNumImageSample, packet_header.dataType);
                     // std::memcpy(&ph, buffer_, sizeof(imb::PacketHeader));
-                    
+                    // publisher_.ProcessData(data_body);
+                    // std::thread(&M3PclPublisher::ProcessData, this, data_body, publisher_).detach();
+                    // publisher_.ProcessData(data_body);
                     // std::cout << "Data body size: " << packet_header.packetBodySize;
                     // std::cout << "\nAltitude : " << data_header.bSoundSpeedSource;
                     // std::cout << "\nData header size : " << sizeof(imb::DataHeader);
@@ -132,25 +134,11 @@ void M3SonarListener::run_listener() {
     }
 }
 
-void M3SonarListener::stop_listener(){
+void M3Listener::stop_listener(){
     std::cout << "Closing connection to " << addr_ << " at port " << port_ << std::endl;
     close(client_socket_);
 }
 
 }
 
-int main(int, char *argv[]) {
-    const char *ip_addr = argv[1];
-    std::stringstream strValue;
-    strValue << argv[2];
-    uint16_t port;
-    strValue >> port;
 
-    m3::M3SonarListener listener (ip_addr, port);
-
-    listener.create_socket();
-    listener.connect_to_sonar();
-    listener.run_listener();
-
-    return 0;
-}

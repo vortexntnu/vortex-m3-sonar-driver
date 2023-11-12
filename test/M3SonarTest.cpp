@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <imb/M3SonarListener.hpp>
+#include <imb/M3Listener.hpp>
 
 TEST(M3SonarTest, TcpConnection)
 {
@@ -26,7 +26,7 @@ TEST(M3SonarTest, TcpConnection)
     if (test == -1) {
         std::cerr << "Error connecting to the server" << std::endl;
         close(clientSocket);
-        // return 1;
+        // return 1;, M3PclPublisher publisher
     }
     
     while (true) {
