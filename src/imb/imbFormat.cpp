@@ -140,8 +140,8 @@ DataBody::DataBody(const uint8_t* byteArray, uint16_t nNumBeams, uint16_t nNumSa
                 std::memcpy(&complexQ, byteArray + (i * nNumSamples + j) * sizeof(std::complex<float>) + sizeof(float), sizeof(float));
 
                 // Convert from network byte order to host byte order
-                complexI = ntohl(complexI);
-                complexQ = ntohl(complexQ);
+                // complexI = ntohl(complexI);
+                // complexQ = ntohl(complexQ);
 
                 // Assign the values to the complexData matrix
                 complexData(i, j) = std::complex<float>(*reinterpret_cast<float*>(&complexI), *reinterpret_cast<float*>(&complexQ));

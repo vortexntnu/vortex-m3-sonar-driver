@@ -9,17 +9,25 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <vector>
 #include <mutex>
+#include <cmath>
 #include <pcl_conversions/pcl_conversions.h>
 #include <imb/M3Listener.hpp>
 
 using namespace std::chrono_literals;
 namespace m3{
     M3Publisher::M3Publisher() : Node("M3_API_Publisher"){
+
+        // Define the quality of service profile for publisher to match the other publishers and subscribers
+        // rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
+        // qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
+        // auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 1), qos_profile);
+
+
         publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("m3/points", 10);
         data_vector_ = std::vector<uint8_t>();
         new_packet_ = false;
         std::thread(&M3Publisher::CreateListener, this, "10.0.0.153", 20001U).detach();
-        timer_ = this->create_wall_timer(500ms, std::bind(&M3Publisher::ProcessData, this));
+        timer_ = this->create_wall_timer(100ms, std::bind(&M3Publisher::ProcessData, this));
     }
     void M3Publisher::ProcessData() {
         try{
@@ -37,28 +45,39 @@ namespace m3{
 
                 // std::cout << "Speed of sound " << data_header.fSoundSpeed << std::endl;
                 // std::vector<pcl::PointXYZI> points_for_cloud = std::vector<pcl::PointXYZI>();
-                // for(auto beam : data_header.fBeamList){
-                //     if (beam != 0.0){
-                //         std::cout << beam << std::endl;
-                //     }
-                // }
                 //Inintialize the pointcloud
-                // pcl::PointCloud<pcl::PointXYZI> cloud;
-                // cloud.height = 1;
-                // cloud.width = data_header.nNumBeams * data_header.nNumImageSample;
-                // cloud.is_dense = false;
-                // cloud.points.resize(cloud.height * cloud.width);
+                pcl::PointCloud<pcl::PointXYZI> cloud;
+                cloud.height = 1;
+                cloud.width = data_header.nNumBeams * data_header.nNumImageSample;
+                cloud.is_dense = false;
+                cloud.points.resize(cloud.height * cloud.width);
 
-                // for(size_t i = 0; i < data_header.nNumBeams; i++){
-                //     for(size_t j = 0; j < data_header.nNumImageSample; j++){
-                //         pcl::PointXYZI point;
-                //         point.x = data_body.complexData[i][j].real();
-                //         point.y = data_body.complexData[i][j].imag();
-                //         point.z = 0;
-                //         point.intensity = 0;
-                //         cloud.points[i * data_header.nNumImageSample + j] = point;
-                //     }
-                // }
+                for(size_t i = 0; i < data_header.nNumBeams; i++){
+                    float beam_angle = data_header.fBeamList[i]; //Current beam angle
+                    for(size_t j = 0; j < data_header.nNumImageSample; j++){
+                        pcl::PointXYZI point;
+                        float dist_to_point = ((data_header.fSWST - data_header.fTXWST) + data_header.fImageSampleInterval * j) 
+                            * data_header.fSoundSpeed / 2; // Formula given in the IMB format documentation
+                        point.x = dist_to_point * sin(beam_angle * M_PI / 180.0);
+                        point.y = dist_to_point * cos(beam_angle * M_PI / 180.0);
+                        point.z = 0;
+                        float intensity = data_body.complexData(i, j).real();
+                        if(intensity > 0){
+                            point.intensity = intensity;
+                        }
+                        else{
+                            point.intensity = 0;
+                        }
+                        cloud.points[i * data_header.nNumImageSample + j] = point;
+                    }
+                }
+                // std::cout << "[INFO] Cloud Size: " << cloud.points.size() << std::endl;
+                // Convert the pointcloud to a ROS message
+                sensor_msgs::msg::PointCloud2 message;
+                pcl::toROSMsg(cloud, message);
+                message.header.frame_id = "m3_sonar";
+                message.header.stamp = rclcpp::Time(data_header.dwTimeSec, data_header.dwTimeMillisec); // Timestamp from sonar data
+                PublishMessage(message);
                 
 
                 // TODO - find a way to create the pointcloud2 message directly as sensor_msg
@@ -86,6 +105,10 @@ namespace m3{
         listener.connect_to_sonar();
         listener.run_listener();
     } 
+    // M3Publisher::~M3Publisher(){
+        
+
+    // }
 }
 
 int main(int argc, char *argv[]) {
@@ -96,7 +119,6 @@ int main(int argc, char *argv[]) {
     // strValue >> port;
 
     // m3::M3PclPublisher publisher (argv[3]); // object that publishes the data extracted from the API
-
     // rclcpp::init(argc, argv);
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<m3::M3Publisher>());

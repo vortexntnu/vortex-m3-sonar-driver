@@ -23,5 +23,6 @@ public:
     void connect_to_sonar();
     void run_listener();
     void stop_listener();
+    ~M3Listener();
 };
 }

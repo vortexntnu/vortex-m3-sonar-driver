@@ -102,10 +102,15 @@ void M3Listener::run_listener() {
     }
 }
 
-/// @brief Stops the listener
+/// @brief Closes the socket
 void M3Listener::stop_listener(){
     std::cout << "[INFO] Closing connection to " << addr_ << " at port " << port_ << std::endl;
     close(client_socket_);
+}
+
+/// @brief Destructor closing the socket
+M3Listener::~M3Listener(){
+    stop_listener();
 }
 
 }
