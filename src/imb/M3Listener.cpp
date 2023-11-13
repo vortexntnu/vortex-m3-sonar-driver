@@ -24,7 +24,7 @@ namespace m3{
 /// @param mutex Shared lock
 /// @param new_packet Boolean to indicate if a new packet is ready
 M3Listener::M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_packet)
- : addr_ (addr), port_ (port), shared_vector_ (shared_vector), mutex_ (mutex), new_packet_ (new_packet) {
+ : addr_ (addr), port_ (port), shared_vector_ (shared_vector), new_packet_ (new_packet), mutex_ (mutex) {
 
 }
 
@@ -42,12 +42,12 @@ void M3Listener::create_socket(){
 
 /// @brief Initiates the connection to the sonar
 void M3Listener::connect_to_sonar(){
-    std::cout << "Connecting to " << addr_ << " at port " << port_ << std::endl;
+    std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
     if (connect(client_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_)) == -1) {
         close(client_socket_);
         throw std::runtime_error("Error connecting to server");
     }
-    std::cout << "Finished connecting" << std::endl;
+    std::cout << "[INFO] Established connection with server " << addr_ << " at port " << port_ << std::endl;
 }
 
 /// @brief Starts listening for data from the M3 API
@@ -63,7 +63,7 @@ void M3Listener::run_listener() {
             std::cerr << "Error receiving data from the server" << std::endl;
             break;
         } else if (bytes_read == 0) { // Connection closed by the server
-            std::cout << "Server closed the connection" << std::endl;
+            std::cout << "[INFO] Server closed the connection" << std::endl;
             break;
         } else {
             buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
@@ -77,11 +77,13 @@ void M3Listener::run_listener() {
                 && int(buffer_[5]) == SYNC_WORD_0
                 && int(buffer_[7]) == SYNC_WORD_0
             );
+            // std::cout << "Header: " << is_header << std::endl;
             if (is_header){ //Packet contains header -> create the object and send it to publisher
                 if(!first_iter && !new_packet_){
                     std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
                     shared_vector_ = packet_data;
                     new_packet_ = true;
+                    std::cout << "[INFO] New packet ready!" << std::endl;
 
                     lock.unlock();
 
@@ -102,7 +104,7 @@ void M3Listener::run_listener() {
 
 /// @brief Stops the listener
 void M3Listener::stop_listener(){
-    std::cout << "Closing connection to " << addr_ << " at port " << port_ << std::endl;
+    std::cout << "[INFO] Closing connection to " << addr_ << " at port " << port_ << std::endl;
     close(client_socket_);
 }
 

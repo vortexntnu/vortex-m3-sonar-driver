@@ -15,6 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(PCL REQUIRED)
 
 # Specify the include directories
 include_directories(include)
@@ -38,6 +40,7 @@ add_executable(M3Listener
 # )
 
 ament_target_dependencies(M3Listener
+    pcl_conversions
     Eigen3
     rclcpp
     sensor_msgs
@@ -58,6 +61,10 @@ install(TARGETS
     M3Listener
     # ${PROJECT_NAME}_main
     DESTINATION lib/${PROJECT_NAME}
+)
+target_link_libraries(M3Listener
+  pcl_common
+  ${PCL_LIBRARIES}
 )
 
 # if(BUILD_TESTING)
