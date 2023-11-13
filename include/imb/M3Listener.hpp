@@ -12,11 +12,13 @@ class M3Listener {
 public:
     const std::string addr_;
     const u_int16_t port_;
-    M3Publisher& publisher_;
-    int client_socket_;
+    std::vector<uint8_t>& shared_vector_;
+    bool& new_packet_;
+    std::mutex& mutex_;
     uint8_t buffer_[1024 * 64]; // How much data to read at a single time (1024 -> 64 * 1024 seems to be working properly)
     sockaddr_in server_addr_;
-    M3Listener(std::string addr, u_int16_t port, M3Publisher& publisher);
+    int client_socket_;
+    M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_packet);
     void create_socket();
     void connect_to_sonar();
     void run_listener();

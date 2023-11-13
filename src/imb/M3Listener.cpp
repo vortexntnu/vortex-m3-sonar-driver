@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -16,12 +17,20 @@
 
 namespace m3{
 
-M3Listener::M3Listener(std::string addr, u_int16_t port, M3Publisher& publisher) : addr_ (addr), port_ (port), publisher_ (publisher) {
+/// @brief Default constructor
+/// @param addr Address to the M3 API
+/// @param port Port to the M3 API (default 20001 / 21001)
+/// @param shared_vector Vector to write the data to
+/// @param mutex Shared lock
+/// @param new_packet Boolean to indicate if a new packet is ready
+M3Listener::M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_packet)
+ : addr_ (addr), port_ (port), shared_vector_ (shared_vector), mutex_ (mutex), new_packet_ (new_packet) {
 
 }
 
+/// @brief Creates the socket
 void M3Listener::create_socket(){
-    client_socket_ = socket(AF_INET, SOCK_STREAM, 0);
+    client_socket_ = socket(AF_INET, SOCK_STREAM, 0); //Initialize socket
     if (client_socket_ == -1) {
         throw std::runtime_error("Error creating socket");
     }
@@ -31,6 +40,7 @@ void M3Listener::create_socket(){
     server_addr_.sin_addr.s_addr = inet_addr(addr_.c_str());
 }
 
+/// @brief Initiates the connection to the sonar
 void M3Listener::connect_to_sonar(){
     std::cout << "Connecting to " << addr_ << " at port " << port_ << std::endl;
     if (connect(client_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_)) == -1) {
@@ -40,11 +50,10 @@ void M3Listener::connect_to_sonar(){
     std::cout << "Finished connecting" << std::endl;
 }
 
+/// @brief Starts listening for data from the M3 API
 void M3Listener::run_listener() {
-
-    //Holds all the data from each packet-collection
-    std::vector<uint8_t> packet_data;
-    bool first_iter = true;
+    std::vector<uint8_t> packet_data; //Holds all the data from each packet-collection
+    bool first_iter = true; // Used to ignore the first iteration, as the packet is not complete
     while (true) {
         // Receive data from the server
         int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
@@ -57,11 +66,9 @@ void M3Listener::run_listener() {
             std::cout << "Server closed the connection" << std::endl;
             break;
         } else {
-            buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended
+            buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
 
-            
-
-            bool is_header = (int(buffer_[0]) == SYNC_WORD_1 //Check for synchronization word
+            bool is_header = (int(buffer_[0]) == SYNC_WORD_1 // Check for synchronization word to find header packet
                 && int(buffer_[2]) == SYNC_WORD_1
                 && int(buffer_[4]) == SYNC_WORD_1
                 && int(buffer_[6]) == SYNC_WORD_1
@@ -71,69 +78,29 @@ void M3Listener::run_listener() {
                 && int(buffer_[7]) == SYNC_WORD_0
             );
             if (is_header){ //Packet contains header -> create the object and send it to publisher
-                if(!first_iter){
-                    const uint8_t* start = &packet_data[0]; // grabs the pointer to the first element in the vector which now contains the whole packet
-                    // std::cout << bytes_read << std::endl;
-                    imb::PacketHeader packet_header(start);
+                if(!first_iter && !new_packet_){
+                    std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
+                    shared_vector_ = packet_data;
+                    new_packet_ = true;
 
-                    imb::DataHeader data_header(start + sizeof(imb::PacketHeader));
+                    lock.unlock();
 
-                    imb::DataBody data_body(start + sizeof(imb::PacketHeader) + sizeof(imb::DataHeader), data_header.nNumBeams, data_header.nNumImageSample, packet_header.dataType);
-                    // std::memcpy(&ph, buffer_, sizeof(imb::PacketHeader));
-                    // publisher_.ProcessData(data_body);
-                    // std::thread(&M3PclPublisher::ProcessData, this, data_body, publisher_).detach();
-                    // publisher_.ProcessData(data_body);
-                    // std::cout << "Data body size: " << packet_header.packetBodySize;
-                    // std::cout << "\nAltitude : " << data_header.bSoundSpeedSource;
-                    // std::cout << "\nData header size : " << sizeof(imb::DataHeader);
-                    // std::cout << "\nSize : " << packet_data.size() << std::endl;
+                    packet_data.clear(); // Resets the vector for a new packet-collection
 
-                    // std::cout << data_body.complexData << std::endl;
-
-
-                    // std::cout << "\nCapacity : " << packet_data.capacity();
-
-                    packet_data.clear(); // clear the data
-
-                    // std::cout << "Received header packet with size "<< bytes_read << std::endl;
                 }
                 else{
-                    first_iter = false; //Continue after this iter
+                    first_iter = false; //Ignores the first iteration, as the packet is not complete
                 }
                 
             }
-            else { //Packet contains data
-                
-
-                //std::cout << "Received illegal packet with size " << bytes_read << std::endl;
-                // std::cout << "Not header with size " << bytes_read << std::endl;
-            }
-
-            for (uint8_t byte : buffer_){ // add all data from the buffer to the vector
+            for (uint8_t byte : buffer_){ // All data is stored in the vector
                     packet_data.push_back(byte);
             }
-            
-            // if (bytes_read > 1024 * 8){
-            //     // std::cout << bytes_read << std::endl;
-            // }
-            
-            // uint8_t sync_word = 0x80;
-            // uint8_t sync_word_2 = 0x00;
-            // for (size_t i=0; i<8; i+=2) {
-            //     if(int(buffer_[i]) == sync_word_2 && int(buffer_[i+1]) == sync_word){
-            //         std::cout << "Sync!";
-            //     }
-            //     else{
-            //         break;
-            //     }
-            // }
-            // std::cout << "Received data from server" << std::endl;
-            //imb::ImbPacketStructure packet(buffer_);
-            
         }
     }
 }
 
+/// @brief Stops the listener
 void M3Listener::stop_listener(){
     std::cout << "Closing connection to " << addr_ << " at port " << port_ << std::endl;
     close(client_socket_);
