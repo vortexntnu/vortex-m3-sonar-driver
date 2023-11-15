@@ -15,24 +15,27 @@
 
 using namespace std::chrono_literals;
 namespace m3{
-    M3Publisher::M3Publisher() : Node("M3_API_Publisher"){
+    M3Publisher::M3Publisher() : Node("M3Publisher"){
 
         // Define the quality of service profile for publisher to match the other publishers and subscribers
         // rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
         // qos_profile.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
         // auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 1), qos_profile);
 
+        this->declare_parameter("ip_addr", rclcpp::PARAMETER_STRING);
+        this->declare_parameter("port", rclcpp::PARAMETER_INTEGER);
+        this->declare_parameter("topic", rclcpp::PARAMETER_STRING);
 
-        publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("m3/points", 10);
+        publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(this->get_parameter("topic").as_string().c_str(), 10);
         data_vector_ = std::vector<uint8_t>();
-        new_packet_ = false;
-        std::thread(&M3Publisher::CreateListener, this, "10.0.0.153", 20001U).detach();
+        new_header_ = false;
+        std::thread(&M3Publisher::CreateListener, this, this->get_parameter("ip_addr").as_string(), this->get_parameter("port").as_int()).detach();
         timer_ = this->create_wall_timer(100ms, std::bind(&M3Publisher::ProcessData, this));
     }
     void M3Publisher::ProcessData() {
         try{
-            // std::cout << new_packet_ << std::endl;
-            if(new_packet_){
+            // std::cout << new_header_ << std::endl;
+            if(new_header_){
                 std::unique_lock<std::mutex> lock(mutex_); // Thread-safe handling
                 const uint8_t* start = &data_vector_[0]; // Grabs the pointer to the first element in the vector
                 // imb::ImbPacketStructure packet(start); // TODO: - fix packet structure
@@ -58,7 +61,7 @@ namespace m3{
                         pcl::PointXYZI point;
                         float dist_to_point = ((data_header.fSWST - data_header.fTXWST) + data_header.fImageSampleInterval * j) 
                             * data_header.fSoundSpeed / 2; // Formula given in the IMB format documentation
-                        point.x = dist_to_point * sin(beam_angle * M_PI / 180.0);
+                        point.x = -dist_to_point * sin(beam_angle * M_PI / 180.0);
                         point.y = dist_to_point * cos(beam_angle * M_PI / 180.0);
                         point.z = 0;
                         float intensity = data_body.complexData(i, j).real();
@@ -85,7 +88,7 @@ namespace m3{
                 // sensor_msgs::msg::PointCloud2 message;
                 // message.fields = points;
 
-                new_packet_ = false; // Ready to receive new packet
+                new_header_ = false; // Ready to receive new packet
                 lock.unlock();
             }
         }
@@ -100,7 +103,7 @@ namespace m3{
         publisher_->publish(message);
     }
     void M3Publisher::CreateListener(std::string addr, u_int16_t port){
-        M3Listener listener (addr, port, data_vector_, mutex_, new_packet_);
+        M3Listener listener (addr, port, data_vector_, mutex_, new_header_);
         listener.create_socket();
         listener.connect_to_sonar();
         listener.run_listener();

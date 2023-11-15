@@ -11,6 +11,7 @@
 #include <imb/ImbFormat.hpp>
 #include <cstdint>
 #include <vector>
+#include <chrono>
 
 #define SYNC_WORD_0 0x80
 #define SYNC_WORD_1 0x00
@@ -23,8 +24,8 @@ namespace m3{
 /// @param shared_vector Vector to write the data to
 /// @param mutex Shared lock
 /// @param new_packet Boolean to indicate if a new packet is ready
-M3Listener::M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_packet)
- : addr_ (addr), port_ (port), shared_vector_ (shared_vector), new_packet_ (new_packet), mutex_ (mutex) {
+M3Listener::M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_header)
+ : addr_ (addr), port_ (port), shared_vector_ (shared_vector), new_header_ (new_header), mutex_ (mutex) {
 
 }
 
@@ -42,12 +43,23 @@ void M3Listener::create_socket(){
 
 /// @brief Initiates the connection to the sonar
 void M3Listener::connect_to_sonar(){
-    std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
-    if (connect(client_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_)) == -1) {
-        close(client_socket_);
-        throw std::runtime_error("Error connecting to server");
+    while(true){
+        std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
+        if (connect(client_socket_, (struct sockaddr*)&server_addr_, sizeof(server_addr_)) == -1) {
+            // close(client_socket_);
+            // throw std::runtime_error("Error connecting to server");
+            int timeout_delay = 5;
+            std::cerr << "Error connecting to server! Trying again in " << timeout_delay << " seconds" << std::endl;
+            std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::seconds(timeout_delay));
+            continue;
+        }
+        else{
+            std::cout << "[INFO] Established connection with server " << addr_ << " at port " << port_ << std::endl;
+            break;
+        }
+        
     }
-    std::cout << "[INFO] Established connection with server " << addr_ << " at port " << port_ << std::endl;
+    
 }
 
 /// @brief Starts listening for data from the M3 API
@@ -61,9 +73,11 @@ void M3Listener::run_listener() {
         
         if (bytes_read == -1) { //Cannot read data
             std::cerr << "Error receiving data from the server" << std::endl;
+            connect_to_sonar();
             break;
         } else if (bytes_read == 0) { // Connection closed by the server
             std::cout << "[INFO] Server closed the connection" << std::endl;
+            connect_to_sonar();
             break;
         } else {
             buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
@@ -77,13 +91,13 @@ void M3Listener::run_listener() {
                 && int(buffer_[5]) == SYNC_WORD_0
                 && int(buffer_[7]) == SYNC_WORD_0
             );
-            // std::cout << "Header: " << is_header << std::endl;
             if (is_header){ //Packet contains header -> create the object and send it to publisher
-                if(!first_iter && !new_packet_){
+                if(!first_iter && !new_header_){
                     std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
                     shared_vector_ = packet_data;
-                    new_packet_ = true;
-                    std::cout << "[INFO] New packet ready!" << std::endl;
+                    new_header_ = true;
+                    std::cout << "[INFO] New packet ready" << std::endl;
+
 
                     lock.unlock();
 
@@ -104,7 +118,7 @@ void M3Listener::run_listener() {
 
 /// @brief Closes the socket
 void M3Listener::stop_listener(){
-    std::cout << "[INFO] Closing connection to " << addr_ << " at port " << port_ << std::endl;
+    std::cout << "[INFO] Closing connection to server " << addr_ << " at port " << port_ << std::endl;
     close(client_socket_);
 }
 

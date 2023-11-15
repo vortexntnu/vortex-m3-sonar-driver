@@ -29,7 +29,7 @@ include_directories(include)
 #     src/utils/netUtils.cpp
     
 # )
-add_executable(M3Listener
+add_executable(M3Publisher
   src/imb/M3Listener.cpp
   src/imb/imbFormat.cpp
   src/imb/M3Publisher.cpp
@@ -39,7 +39,7 @@ add_executable(M3Listener
 #     Eigen3
 # )
 
-ament_target_dependencies(M3Listener
+ament_target_dependencies(M3Publisher
     pcl_conversions
     Eigen3
     rclcpp
@@ -58,11 +58,11 @@ install(
 
 # Install the library
 install(TARGETS 
-    M3Listener
+    M3Publisher
     # ${PROJECT_NAME}_main
     DESTINATION lib/${PROJECT_NAME}
 )
-target_link_libraries(M3Listener
+target_link_libraries(M3Publisher
   pcl_common
   ${PCL_LIBRARIES}
 )
