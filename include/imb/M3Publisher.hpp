@@ -1,10 +1,13 @@
 #pragma once
+#include <imb/M3Listener.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <eigen3/Eigen/Dense>
-#include <imb/ImbFormat.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <vector>
-#include <mutex>
+#include <pcl_conversions/pcl_conversions.h>
+#include <functional>
+#include <memory>
+#include <string>
+#include <cmath>
+
 
 namespace m3{
     class M3Publisher : public rclcpp::Node
@@ -15,13 +18,25 @@ namespace m3{
         mutable std::mutex mutex_;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
-        bool new_header_;
+        bool packet_ready_;
+
+        /// @brief Publishes the message to the initiated topic
+        /// @param message Message to publish (PointCloud2)
         void PublishMessage(sensor_msgs::msg::PointCloud2 message);
         // M3Listener& listener_;
     public:
+        /// @brief Default constructor
         M3Publisher();
+        
+        /// @brief Processes the data from the listener
         void ProcessData();
+
+        /// @brief Creates the listener
+        /// @param addr Address to the M3 API
+        /// @param port Port to the M3 API (default 20001 / 21001)
         void CreateListener(std::string addr, u_int16_t port);
+
+        /// @brief Default destructor
         ~M3Publisher() = default;
     }; 
 }

@@ -1,35 +1,15 @@
-
-#include <iostream>
-#include <sstream>
-#include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <imb/M3Listener.hpp>
-#include <exception>
-#include <imb/ImbFormat.hpp>
-#include <cstdint>
-#include <vector>
-#include <chrono>
 
 #define SYNC_WORD_0 0x80
 #define SYNC_WORD_1 0x00
 
 namespace m3{
 
-/// @brief Default constructor
-/// @param addr Address to the M3 API
-/// @param port Port to the M3 API (default 20001 / 21001)
-/// @param shared_vector Vector to write the data to
-/// @param mutex Shared lock
-/// @param new_packet Boolean to indicate if a new packet is ready
-M3Listener::M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_header)
- : addr_ (addr), port_ (port), shared_vector_ (shared_vector), new_header_ (new_header), mutex_ (mutex) {
+M3Listener::M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& packet_ready)
+ : addr_ (addr), port_ (port), shared_vector_ (shared_vector), packet_ready_ (packet_ready), mutex_ (mutex) {
 
 }
 
-/// @brief Creates the socket
 void M3Listener::create_socket(){
     client_socket_ = socket(AF_INET, SOCK_STREAM, 0); //Initialize socket
     if (client_socket_ == -1) {
@@ -41,7 +21,7 @@ void M3Listener::create_socket(){
     server_addr_.sin_addr.s_addr = inet_addr(addr_.c_str());
 }
 
-/// @brief Initiates the connection to the sonar
+
 void M3Listener::connect_to_sonar(){
     while(true){
         std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
@@ -62,7 +42,7 @@ void M3Listener::connect_to_sonar(){
     
 }
 
-/// @brief Starts listening for data from the M3 API
+
 void M3Listener::run_listener() {
     std::vector<uint8_t> packet_data; //Holds all the data from each packet-collection
     bool first_iter = true; // Used to ignore the first iteration, as the packet is not complete
@@ -92,37 +72,34 @@ void M3Listener::run_listener() {
                 && int(buffer_[7]) == SYNC_WORD_0
             );
             if (is_header){ //Packet contains header -> create the object and send it to publisher
-                if(!first_iter && !new_header_){
-                    std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
-                    shared_vector_ = packet_data;
-                    new_header_ = true;
-                    std::cout << "[INFO] New packet ready" << std::endl;
-
-
-                    lock.unlock();
-
+                if(!first_iter){
+                    if(!packet_ready_){
+                        std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
+                        shared_vector_ = packet_data;
+                        packet_ready_ = true;
+                        lock.unlock();
+                    }
                     packet_data.clear(); // Resets the vector for a new packet-collection
-
                 }
                 else{
                     first_iter = false; //Ignores the first iteration, as the packet is not complete
                 }
                 
             }
-            for (uint8_t byte : buffer_){ // All data is stored in the vector
-                    packet_data.push_back(byte);
+            for (int i = 0; i < bytes_read; i++){ // All data is stored in the vector
+                    packet_data.push_back(buffer_[i]);
             }
         }
     }
 }
 
-/// @brief Closes the socket
+
 void M3Listener::stop_listener(){
     std::cout << "[INFO] Closing connection to server " << addr_ << " at port " << port_ << std::endl;
     close(client_socket_);
 }
 
-/// @brief Destructor closing the socket
+
 M3Listener::~M3Listener(){
     stop_listener();
 }

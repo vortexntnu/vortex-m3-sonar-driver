@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 #include <arpa/inet.h>
 #include <eigen3/Eigen/Dense>
 
