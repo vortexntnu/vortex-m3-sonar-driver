@@ -1,6 +1,6 @@
 M3Publisher:
     ros__parameters:
-        ip_addr: "10.0.0.153"
+        sonar_api_ip_addr: "10.0.0.153"
         port: 20001
         topic: "m3/points"
         callback_time: 1

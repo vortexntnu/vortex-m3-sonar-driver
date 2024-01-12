@@ -14,7 +14,7 @@ namespace m3{
 class M3Listener {
 public:
     const std::string addr_;
-    const u_int16_t port_;
+    const uint16_t port_;
     std::vector<uint8_t>& shared_vector_;
     bool& packet_ready_;
     std::mutex& mutex_;
@@ -28,7 +28,7 @@ public:
     /// @param shared_vector Vector to write the data to
     /// @param mutex Shared lock
     /// @param new_packet Boolean to indicate if a new packet is ready
-    M3Listener(std::string addr, u_int16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_header);
+    M3Listener(std::string addr, uint16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& new_header);
 
     /// @brief Creates the socket with the given address and port
     void create_socket();

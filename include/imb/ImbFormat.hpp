@@ -4,6 +4,8 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <eigen3/Eigen/Dense>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <pcl_conversions/pcl_conversions.h>
 
 namespace m3 {
 namespace imb {
@@ -18,8 +20,8 @@ enum class DataType : uint16_t {
 
 // Structure for MUM_TVG_PARAMS
 struct MUM_TVG_PARAMS {
-    int16_t factorA;   // Factor A, the spreading coefficient
-    int16_t factorB;   // Factor B, the absorption coefficient in dB/km
+    uint16_t factorA;   // Factor A, the spreading coefficient
+    uint16_t factorB;   // Factor B, the absorption coefficient in dB/km
     float factorC;     // Factor C, the TVG curve offset in dB
     float factorL;     // Factor L, the maximum gain limit in dB};
 };
@@ -33,6 +35,7 @@ struct OFFSETS
     float xRotOffset; // Rotational offset about X axis in degrees (Pitch offset)
     float yRotOffset; // Rotational offset about Y axis in degrees (Roll offset)
     float zRotOffset; // Rotational offset about Z axis in degrees (Yaw offset)
+    uint32_t dwMounting; // Mounting orientation
 };
 
 // Structure for ROTATOR_OFFSETS
@@ -72,16 +75,6 @@ struct GPS_QUALITY_PARAS
     int16_t wReserved;              // Reserved field to keep the structure aligned
 };
 
-
-
-
-
-
-
-
-
-
-
 // Structure for Packet Header
 struct PacketHeader 
 {
@@ -89,10 +82,11 @@ struct PacketHeader
     DataType dataType;                  // Data type
     uint16_t reservedField;             // Reserved field
     uint32_t reservedBytes[10];         // 40 reserved bytes
-    uint32_t packetBodySize;            // Packet body size
+    uint32_t packet_body_size;            // Packet body size
 
-    PacketHeader(const uint8_t* byteArray);
-    PacketHeader();
+    /// @brief Default constructor for PacketHeader. Read the raw bytes from memory
+    /// @param byte_array Start address in the memory
+    PacketHeader(const uint8_t* byte_array);
 };
 
 // Structure for Data Header
@@ -171,10 +165,11 @@ struct DataHeader
     uint8_t bReserved[2];                               // Reserved field
     float fROV_Altitude;                                // ROV Altitude
     float fConductivity;                                // Conductivity
-    uint8_t Reserved[3796];                             // Reserved field
+    uint8_t reserved[3796];                             // reserved field
 
-    DataHeader(const uint8_t* byteArray);
-    DataHeader();
+    /// @brief Default constructor for DataHeader. Read the raw bytes from memory
+    /// @param byte_array Start address in the memory
+    DataHeader(const uint8_t* byte_array);
 };
 
 
@@ -189,22 +184,24 @@ struct DataBody
     /**
      * @brief Construct a new Data Body object from the raw bytes of the TCP packet
      * 
-     * @param byteArray Raw bytes of the TCP packet
+     * @param byte_array Raw bytes of the TCP packet
      * @param nNumBeams Number of beams
      * @param nNumSamples Number of samples in each beam
      * @param type Data type (FloatComplex or IntegerMagnitude)
      * @throw std::runtime_error if the data type is not supported
      */
-    DataBody(const uint8_t* byteArray, uint16_t nNumBeams, uint16_t nNumSamples, DataType type);
+    DataBody(const uint8_t* byte_array, uint16_t nNumBeams, uint16_t nNumSamples, DataType type);
 };
 
 // Structure for Packet Footer
 struct PacketFooter 
 {
-    uint32_t packetBodySize;      // Packet body size (4 bytes)
-    uint32_t reservedBytes[10];   // 40 reserved bytes (10 x 4 bytes)
+    uint32_t packet_body_size;      // Packet body size (4 bytes)
+    uint32_t reserved_bytes[10];   // 40 reserved bytes (10 x 4 bytes)
 
-    PacketFooter(const uint8_t* byteArray);
+    /// @brief Default constructor for PacketFooter
+    /// @param byte_array Address of the first byte of the packet footer
+    PacketFooter(const uint8_t* byte_array);
 };
 
 #pragma pack(pop) // Stop disabling padding
@@ -214,13 +211,25 @@ struct PacketFooter
 // Define the combined struct of the IMB Beamformed Data Format
 struct ImbPacketStructure 
 {
-    PacketHeader packetHeader;
-    DataHeader dataHeader;
+    PacketHeader packet_header;
+    DataHeader data_header;
     DataBody dataBody;
-    PacketFooter packetFooter;
+    PacketFooter packet_footer;
 
-    ImbPacketStructure(const uint8_t* byteArray);
-    void validate() const;
+    mutable bool validated = true;
+    mutable sensor_msgs::msg::PointCloud2 message;
+
+
+    /// @brief Creates the complete IMB packet structure from the raw bytes of the TCP packet collection
+    /// @param byte_array Start of the packet
+    ImbPacketStructure(const uint8_t* byte_array);
+
+    /// @brief Validates the contents of the packet
+    void Validate() const;
+
+    /// @brief Generates a pointcloud from the data
+    void GeneratePointCloud() const;
+    
 };
 
 

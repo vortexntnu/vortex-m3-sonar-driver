@@ -21,23 +21,11 @@ find_package(PCL REQUIRED)
 # Specify the include directories
 include_directories(include)
 
-# Create executable
-# add_executable(${PROJECT_NAME}_main
-#     src/main.cpp
-#     src/api/m3CommandGenerator.cpp
-#     src/api/m3ResponseParser.cpp
-#     src/utils/netUtils.cpp
-    
-# )
 add_executable(M3Publisher
+  src/imb/ImbFormat.cpp
   src/imb/M3Listener.cpp
-  src/imb/imbFormat.cpp
   src/imb/M3Publisher.cpp
 )
-
-# ament_target_dependencies(${PROJECT_NAME}_main
-#     Eigen3
-# )
 
 ament_target_dependencies(M3Publisher
     pcl_conversions
@@ -45,10 +33,6 @@ ament_target_dependencies(M3Publisher
     rclcpp
     sensor_msgs
 )
-# target_link_libraries(${PROJECT_NAME}_main 
-#   PUBLIC Eigen3::Eigen
-# )
-
 
 # Install the headers
 install(
@@ -56,10 +40,14 @@ install(
     DESTINATION include
 )
 
+install(
+    DIRECTORY test/data
+    DESTINATION data
+)
+
 # Install the library
 install(TARGETS 
     M3Publisher
-    # ${PROJECT_NAME}_main
     DESTINATION lib/${PROJECT_NAME}
 )
 target_link_libraries(M3Publisher
@@ -67,30 +55,28 @@ target_link_libraries(M3Publisher
   ${PCL_LIBRARIES}
 )
 
-# if(BUILD_TESTING)
-#   find_package(ament_cmake_gtest REQUIRED)
-#   ament_add_gtest(${PROJECT_NAME}_test 
-#     # test/main.cpp
-#     # test/XmlCommandGeneratorTest.cpp
-#     # test/XmlResponseParserTest.cpp
-#     # test/ImbFormatTest.cpp
-#     # test/netUtilsTest.cpp
-#     # test/tcpTest.cpp
-#     # test/M3SonarTest.cpp
-#     # src/api/m3CommandGenerator.cpp
-#     # src/api/m3ResponseParser.cpp
-#     # src/imb/imbFormat.cpp
-#     # src/utils/netUtils.cpp
-#     # src/imb/TcpServer.cpp
-#   )
-#   target_include_directories(${PROJECT_NAME}_test PUBLIC
-#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#     $<INSTALL_INTERFACE:include>
-#   )
-#   ament_target_dependencies(${PROJECT_NAME}_test
-#     Eigen3
-#   )
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(${PROJECT_NAME}_test 
+    test/ImbFormatTest.cpp
+    src/imb/ImbFormat.cpp
+    
+  )
+  target_include_directories(${PROJECT_NAME}_test PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+  ament_target_dependencies(${PROJECT_NAME}_test
+    pcl_conversions
+    Eigen3
+    rclcpp
+    sensor_msgs
+  )
+  target_link_libraries(${PROJECT_NAME}_test
+    pcl_common
+    ${PCL_LIBRARIES}
+)
 
-# endif()
+endif()
 
 ament_package()

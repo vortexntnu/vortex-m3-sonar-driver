@@ -1,8 +1,6 @@
 #pragma once
 #include <imb/M3Listener.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <pcl_conversions/pcl_conversions.h>
 #include <functional>
 #include <memory>
 #include <string>
@@ -34,7 +32,7 @@ namespace m3{
         /// @brief Creates the listener
         /// @param addr Address to the M3 API
         /// @param port Port to the M3 API (default 20001 / 21001)
-        void CreateListener(std::string addr, u_int16_t port);
+        void CreateListener(std::string addr, uint16_t port);
 
         /// @brief Default destructor
         ~M3Publisher() = default;
