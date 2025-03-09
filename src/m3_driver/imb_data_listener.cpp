@@ -1,3 +1,4 @@
+// listener.cpp
 #include <m3_driver/imb_data_listener.hpp>
 #include <fstream>
 #include <iosfwd>
@@ -12,12 +13,13 @@ namespace m3 {
 
 using boost::asio::ip::tcp;
 
-M3Listener::M3Listener(std::string addr, uint16_t port, std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& packet_ready)
+M3Listener::M3Listener(std::string addr, uint16_t port, std::vector<uint8_t>& shared_vector,
+                       std::mutex& mutex, std::condition_variable& cond_var)
     : addr_(std::move(addr))
     , port_(port)
     , shared_vector_(shared_vector)
-    , packet_ready_(packet_ready)
     , mutex_(mutex)
+    , cond_var_(cond_var)
     , io_context_()
     , socket_(io_context_)
 {
@@ -45,7 +47,7 @@ void M3Listener::connect_to_sonar(){
 
 void M3Listener::run_listener() {
     std::vector<uint8_t> packet_data;
-    uint8_t buffer[65536]; // Adjust size as needed
+    uint8_t buffer[65536];
     while (true) {
         boost::system::error_code ec;
         size_t bytes_read = socket_.read_some(boost::asio::buffer(buffer), ec);
@@ -71,10 +73,10 @@ void M3Listener::run_listener() {
                 packet_data.insert(packet_data.end(), buffer, buffer + bytes_read);
                 continue;
             }
-            if(!packet_ready_){
+            {
                 std::unique_lock<std::mutex> lock(mutex_);
                 shared_vector_ = packet_data;
-                packet_ready_ = true;
+                cond_var_.notify_one();
             }
             packet_data.clear();
             packet_data.insert(packet_data.end(), buffer, buffer + bytes_read);

@@ -1,6 +1,8 @@
+// publisher.hpp
 #pragma once
 #include <vector>
 #include <mutex>
+#include <condition_variable>
 #include <functional>
 #include <cstdint>
 #include <string>
@@ -16,8 +18,6 @@ namespace m3 {
 
 class M3Publisher {
 public:
-    // publish_callback: function to publish the point cloud (pcl::PointCloud<pcl::PointXYZI>)
-    // callback_time_ms: processing interval in milliseconds
     M3Publisher(std::string ip_addr, uint16_t port,
                 std::function<void(const pcl::PointCloud<pcl::PointXYZI>&)> publish_callback,
                 int callback_time_ms);
@@ -29,8 +29,8 @@ private:
     std::function<void(const pcl::PointCloud<pcl::PointXYZI>&)> publish_callback_;
     int callback_time_ms_;
     std::vector<uint8_t> data_vector_;
-    bool packet_ready_;
     std::mutex mutex_;
+    std::condition_variable cond_var_;
     std::thread processing_thread_;
 
     void ProcessData();
